@@ -175,4 +175,6 @@ A few things worth knowing before you edit:
 
 ## License
 
-No license file is present in this repository yet. Until one is added, the default copyright position applies and you should contact the maintainers before reusing the code or artwork.
+The code is released under the [MIT License](LICENSE) — see `LICENSE` for the full text.
+
+The MIT license covers the code in this repository. It does **not** cover the third-party assets in `assets/`, which keep their own terms: the Spa diagram is CC BY-SA 4.0 and must retain its attribution, and the official Formula1.com diagrams are served hot from their CDN and are trademarks of Formula One Licensing BV.
