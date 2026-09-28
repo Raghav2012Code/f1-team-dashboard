@@ -63,8 +63,22 @@ const records = circuits.split('\n')
   .map((l) => l.replace(/,\s*$/, ''));
 for (const rec of records) {
   const slug = (rec.match(/slug: '([^']+)'/) || [])[1];
-  for (const field of ['name', 'length', 'laps', 'date', 'venue', 'lapBase', 'corner', 'eventUrl', 'mapUrl']) {
+  for (const field of ['name', 'country', 'length', 'laps', 'date', 'venue', 'lapBase', 'corner', 'eventUrl', 'mapUrl']) {
     if (!new RegExp(`\\b${field}:`).test(rec)) note(`${slug} is missing ${field}`);
+  }
+  // The date string must name the weekday the date actually falls on, or the
+  // race strip contradicts itself. Two 2026 rounds are Saturdays.
+  const dateStr = (rec.match(/date: '([^']+)'/) || [])[1];
+  const iso = dateStr && /(\d{1,2}) ([A-Z][a-z]+)/.exec(dateStr);
+  if (iso) {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const when = new Date(Date.UTC(2026, months.indexOf(iso[2]), Number(iso[1]), 12));
+    const realDay = days[when.getUTCDay()];
+    if (dateStr.indexOf(realDay) !== 0) {
+      note(`${slug}: date "${dateStr}" names the wrong weekday; 2026-06-01 style date falls on a ${realDay}`);
+    }
   }
   const sectors = (rec.match(/sectors: \[([^\]]*)\]/) || [])[1] || '';
   if (sectors.split(',').filter((s) => s.trim()).length !== 3) note(`${slug} does not have 3 sectors`);

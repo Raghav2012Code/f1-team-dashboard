@@ -86,7 +86,8 @@ script.js                      Race clock, map animation, charts, all interactio
 circuits-data.js               23 circuits: name, length, laps, map URL, event URL
 circuit-routes.js              Traced racing-line paths, keyed by circuit slug
 assets/spa-francorchamps-map.svg   Bundled Spa layout, 19 turns + sector markings
-tools-lint.cjs                 Static checks; see Contributing
+tools-lint.cjs                 Markup, data and CSS consistency checks
+verify-calendar.cjs            Checks circuits-data.js against the 2026 calendar
 ```
 
 The two data files are plain globals — `OFFICIAL_F1_CIRCUITS` and `OFFICIAL_CIRCUIT_ROUTES` — read directly by `script.js`. Adding a circuit means adding an entry to both, keyed by the same slug.
@@ -97,16 +98,20 @@ The two data files are plain globals — `OFFICIAL_F1_CIRCUITS` and `OFFICIAL_CI
 
 | Field | Status |
 | --- | --- |
-| `name`, `length`, `laps`, `date` | Real, from the published 2026 calendar |
+| `name`, `country`, `length`, `laps`, `date` | Real, from the published 2026 calendar |
 | `mapUrl`, `eventUrl` | Real, served by Formula1.com |
 | `lapBase` | **Invented.** A plausible race lap per circuit, used for the clock, car speed and sector scaling |
 | `sectors`, `corner` | Real circuit features |
 | `weather` | **Invented.** Plausible conditions for that venue in that month — not a live feed |
 
-Two 2026 quirks are baked in and easy to trip over:
+`node verify-calendar.cjs` checks `circuits-data.js` against the published 2026 calendar: round count and order, circuit length, lap count, and the race date including its weekday.
 
-- **The Bahrain GP is at Sepang.** The April race at Sakhir was cancelled, so Malaysia hosts the "Gulf Air Bahrain Grand Prix in Malaysia" in October: 56 laps of the 5.543 km Sepang circuit. The `bahrain` slug carries Sepang's venue, length, lap count and map. There is no 2026 race at Sakhir.
+Four 2026 quirks are baked in and easy to trip over:
+
+- **The Bahrain GP is at Sepang.** The April race at Sakhir was cancelled, so Malaysia hosts the Bahrain Grand Prix in October: 56 laps of the 5.543 km Sepang circuit. The `bahrain` slug carries Sepang's venue, length, lap count and map, and `country` is **Malaysia** because the race strip reports the host nation, not the race's name.
 - **There is no Saudi Arabian GP.** Jeddah was cancelled alongside Bahrain and not replaced, which is why the calendar has 23 rounds and not 24.
+- **There are two Spanish races, and their names are easy to swap.** The Spanish Grand Prix is the new street circuit at Madring, Madrid. The long-standing race at Montmeló keeps its own round as the **Barcelona-Catalunya Grand Prix**.
+- **Two rounds are Saturdays, not Sundays.** Azerbaijan moved to Saturday 26 September at the promoter's request, and Las Vegas is Saturday 21 November. Every other round is a Sunday, so the desk's copy names the weekday per circuit rather than assuming.
 
 ---
 
@@ -168,16 +173,18 @@ Small, focused pull requests are welcome — a corner note, a new circuit, a bug
 Run the checks before you push:
 
 ```bash
-node tools-lint.cjs
+node tools-lint.cjs        # markup, data and CSS consistency
+node verify-calendar.cjs   # circuits-data.js against the published 2026 calendar
 ```
 
-It is not a style linter. It catches the four things that have actually broken this project:
+Neither is a style linter. Together they catch the things that have actually broken this project:
 
 - **`$('#some-id')` in `script.js` with no matching id in `index.html`.** Renaming an id in the markup silently breaks the code that writes to it.
 - **A function that is declared but never called.** This is what an edit that swallows the tail of a function looks like: `node --check` passes, because the orphaned code is still valid JavaScript, it just references variables that are no longer in scope.
 - **A compound class the stylesheet does not define.** `script.js` rewrites `hard-compound` on the strategy dot at the pit stop; without a matching rule the dot keeps the previous colour and the label stops matching the swatch.
 - **Slug drift** between `circuits-data.js` and `circuit-routes.js`, and duplicate ids in the markup.
 - **Implausible circuit data** — a track temperature below the air temperature, a lap count outside the real 2026 range, a pit window that leaves no second stint.
+- **A date that names the wrong weekday.** `tools-lint.cjs` recomputes the day of the week and compares it to the copy, which is how "Sunday, 26 September" got caught when Azerbaijan 2026 is a Saturday.
 
 A few things worth knowing before you edit:
 

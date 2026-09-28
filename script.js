@@ -184,6 +184,7 @@ const liveSpaMap = {
   length: '7.004 km',
   laps: 44,
   date: 'Sunday, 19 July',
+  country: 'Belgium',
   lapBase: 107.228,
   sectors: ['La Source → Raidillon', 'Les Combes → Fagnes', 'Stavelot → Bus Stop'],
   corner: 'Eau Rouge',
@@ -196,13 +197,16 @@ const liveSpaMap = {
 const raceEventNames = {
   australia: 'AUSTRALIAN GRAND PRIX', china: 'CHINESE GRAND PRIX', japan: 'JAPANESE GRAND PRIX',
   miami: 'MIAMI GRAND PRIX', canada: 'CANADIAN GRAND PRIX', monaco: 'MONACO GRAND PRIX',
-  'barcelona-catalunya': 'SPANISH GRAND PRIX', austria: 'AUSTRIAN GRAND PRIX',
+  // Note the two Spanish rounds, which are easy to swap: the Spanish Grand Prix
+  // is the new Madrid circuit, and the long-standing race at Montmelo is now the
+  // Barcelona-Catalunya Grand Prix.
+  'barcelona-catalunya': 'BARCELONA-CATALUNYA GRAND PRIX', austria: 'AUSTRIAN GRAND PRIX',
   'great-britain': 'BRITISH GRAND PRIX', belgium: 'BELGIAN GRAND PRIX', hungary: 'HUNGARIAN GRAND PRIX',
-  netherlands: 'DUTCH GRAND PRIX', italy: 'ITALIAN GRAND PRIX', spain: 'MADRID GRAND PRIX',
+  netherlands: 'DUTCH GRAND PRIX', italy: 'ITALIAN GRAND PRIX', spain: 'SPANISH GRAND PRIX',
   azerbaijan: 'AZERBAIJAN GRAND PRIX', bahrain: 'BAHRAIN GRAND PRIX', singapore: 'SINGAPORE GRAND PRIX',
   // 2026 special case: the Bahrain GP is being run at Sepang, Malaysia, after
   // the April Sakhir round was cancelled.
-  'united-states': 'UNITED STATES GRAND PRIX', mexico: 'MEXICAN GRAND PRIX', brazil: 'BRAZILIAN GRAND PRIX',
+  'united-states': 'UNITED STATES GRAND PRIX', mexico: 'MEXICO CITY GRAND PRIX', brazil: 'SÃO PAULO GRAND PRIX',
   'las-vegas': 'LAS VEGAS GRAND PRIX', qatar: 'QATAR GRAND PRIX',
   'united-arab-emirates': 'ABU DHABI GRAND PRIX',
   'live-spa': 'BELGIAN GRAND PRIX',
@@ -296,7 +300,9 @@ function applyCircuitContext(circuit) {
   const eventName = raceEventNames[circuit.slug] || `${circuit.shortName || circuit.name} GRAND PRIX`;
   const heroCorner = circuit.corner;
   $('#eventName').textContent = eventName;
-  $('#raceVenue').textContent = circuit.name.split(' · ')[0];
+  // The host nation, not the display name's prefix: the Bahrain Grand Prix
+  // races in Malaysia, and Las Vegas is in the United States.
+  $('#raceVenue').textContent = circuit.country || circuit.name.split(' · ')[0];
   $('#raceDate').textContent = circuit.date;
   $('#heroDate').textContent = circuit.date;
   $('#heroCircuit').textContent = circuit.shortName || circuit.name;
