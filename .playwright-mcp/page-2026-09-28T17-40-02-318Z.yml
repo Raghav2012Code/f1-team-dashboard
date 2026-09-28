@@ -1,0 +1,293 @@
+- generic [ref=f46e2]:
+  - banner [ref=f46e3]:
+    - link "Apex GP home" [ref=f46e4] [cursor=pointer]:
+      - /url: "#top"
+      - generic [ref=f46e5]: A
+      - generic [ref=f46e6]: APEX / GP
+    - generic [ref=f46e7]: RACE DESK / BELGIAN GRAND PRIX
+    - generic [ref=f46e9]:
+      - generic [ref=f46e10]: ☁ 18° 26°
+      - button "Toggle focus mode" [ref=f46e11] [cursor=pointer]: ◎
+      - button "Open navigation" [ref=f46e12] [cursor=pointer]: ☰
+  - main [ref=f46e13]:
+    - region "Race status" [ref=f46e14]:
+      - generic [ref=f46e15]:
+        - generic [ref=f46e16]: GREEN FLAG
+        - generic [ref=f46e18]: Belgium — Sunday, 19 July
+      - generic [ref=f46e19]:
+        - generic [ref=f46e20]: LAP 0 / 44
+        - generic [ref=f46e23]: 78:38 TO 78:38 CAP
+      - button "ADVANCE LAP ＋" [ref=f46e24] [cursor=pointer]
+    - generic [ref=f46e26]:
+      - paragraph [ref=f46e27]: Sunday, 19 July / Spa-Francorchamps
+      - heading [level=1] [ref=f46e28]:
+        - text: One eye on Eau Rouge.
+        - emphasis [ref=f46e29]: The other on the tyres.
+    - region "Driver standings" [ref=f46e30]:
+      - article [ref=f46e31] [cursor=pointer]:
+        - generic [ref=f46e32]:
+          - generic [ref=f46e33]: P4
+          - generic [ref=f46e34]: "27"
+          - generic [ref=f46e35]: MED
+        - generic [ref=f46e37]:
+          - generic [ref=f46e38]:
+            - heading "Mara Voss" [level=2] [ref=f46e39]
+            - paragraph [ref=f46e40]:
+              - text: GAP TO P3
+              - strong [ref=f46e41]: "+2.841"
+          - generic [ref=f46e42]:
+            - text: LAST LAP
+            - generic [ref=f46e43]: 1:47.228
+        - generic [ref=f46e44]:
+          - generic [ref=f46e45]: TYRE AGE 0 LAPS
+          - generic [ref=f46e46]: VIEW CAR ↗
+      - article [ref=f46e47] [cursor=pointer]:
+        - generic [ref=f46e48]:
+          - generic [ref=f46e49]: P7
+          - generic [ref=f46e50]: "63"
+          - generic [ref=f46e51]: SOFT
+        - generic [ref=f46e53]:
+          - generic [ref=f46e54]:
+            - heading "Eli Navarro" [level=2] [ref=f46e55]
+            - paragraph [ref=f46e56]:
+              - text: GAP TO P6
+              - strong [ref=f46e57]: "+1.306"
+          - generic [ref=f46e58]:
+            - text: LAST LAP
+            - generic [ref=f46e59]: 1:47.591
+        - generic [ref=f46e60]:
+          - generic [ref=f46e61]: TYRE AGE 0 LAPS
+          - generic [ref=f46e62]: VIEW CAR ↗
+      - generic [ref=f46e63]:
+        - generic [ref=f46e64]:
+          - generic [ref=f46e65]: SPA, RIGHT NOW
+          - generic [ref=f46e66]: LOCAL
+        - generic [ref=f46e67]:
+          - generic [ref=f46e68]: ☁
+          - strong [ref=f46e69]: 18°
+          - generic [ref=f46e70]: AIR
+          - strong [ref=f46e72]: 26°
+          - generic [ref=f46e73]: TRACK
+        - generic [ref=f46e74]:
+          - generic [ref=f46e75]: RAIN 30%
+          - generic [ref=f46e78]: WIND NW 8 km/h
+          - generic [ref=f46e79]: ASPHALT DRY · COOLING
+    - generic [ref=f46e80]:
+      - article [ref=f46e81]:
+        - generic [ref=f46e82]:
+          - generic [ref=f46e83]:
+            - paragraph [ref=f46e84]: LIVE RACE MAP · SPA-FRANCORCHAMPS
+            - heading "Spa-Francorchamps 7.004 km" [level=2] [ref=f46e85]
+          - generic [ref=f46e86]:
+            - generic [ref=f46e87]:
+              - generic [ref=f46e88]: CHOOSE CIRCUIT
+              - combobox "Choose a circuit map" [ref=f46e89] [cursor=pointer]:
+                - option "Spa · live race" [selected]
+                - option "Australia · Melbourne"
+                - option "China · Shanghai"
+                - option "Japan · Suzuka"
+                - option "Miami · Miami International Autodrome"
+                - option "Canada · Montreal"
+                - option "Monaco · Monte Carlo"
+                - option "Spain · Barcelona-Catalunya"
+                - option "Austria · Spielberg"
+                - option "Great Britain · Silverstone"
+                - option "Belgium · Spa-Francorchamps"
+                - option "Hungary · Hungaroring"
+                - option "Netherlands · Zandvoort"
+                - option "Italy · Monza"
+                - option "Spain · Madring (Madrid)"
+                - option "Azerbaijan · Baku"
+                - option "Bahrain GP · Sepang, Malaysia"
+                - option "Singapore · Marina Bay"
+                - option "United States · Austin"
+                - option "Mexico City · Autódromo Hermanos Rodríguez"
+                - option "Brazil · Interlagos"
+                - option "Las Vegas · Strip Circuit"
+                - option "Qatar · Lusail"
+                - option "Abu Dhabi · Yas Marina"
+            - button "RESET VIEW ↺" [ref=f46e90] [cursor=pointer]
+        - generic [ref=f46e91]:
+          - generic [ref=f46e92]:
+            - generic [ref=f46e93]: CIRCUIT
+            - generic [ref=f46e95]: FIELD · 18
+            - generic [ref=f46e97]: "VOSS #27"
+            - generic [ref=f46e99]: "NAVARRO #63"
+            - generic [ref=f46e101]: 20 CARS MOVING
+          - generic [ref=f46e103]:
+            - img "Spa-Francorchamps track layout with all 19 numbered turns, sectors, and DRS detection zones" [ref=f46e104]
+            - group "Interactive track markers and team cars" [ref=f46e105]:
+              - button "Turn 1" [ref=f46e107] [cursor=pointer]
+              - button "Turn 2" [ref=f46e109] [cursor=pointer]
+              - button "Turn 3" [ref=f46e111] [cursor=pointer]
+              - button "Turn 4" [ref=f46e113] [cursor=pointer]
+              - button "Turn 5" [ref=f46e115] [cursor=pointer]
+              - button "Turn 6" [ref=f46e117] [cursor=pointer]
+              - button "Turn 7" [ref=f46e119] [cursor=pointer]
+              - button "Turn 8" [ref=f46e121] [cursor=pointer]
+              - button "Turn 9" [ref=f46e123] [cursor=pointer]
+              - button "Turn 10" [ref=f46e125] [cursor=pointer]
+              - button "Turn 11" [ref=f46e127] [cursor=pointer]
+              - button "Turn 12" [ref=f46e129] [cursor=pointer]
+              - button "Turn 13" [ref=f46e131] [cursor=pointer]
+              - button "Turn 14" [ref=f46e133] [cursor=pointer]
+              - button "Turn 15" [ref=f46e135] [cursor=pointer]
+              - button "Turn 16" [ref=f46e137] [cursor=pointer]
+              - button "Turn 17" [ref=f46e139] [cursor=pointer]
+              - button "Turn 18" [ref=f46e141] [cursor=pointer]
+              - button "Turn 19" [ref=f46e143] [cursor=pointer]
+              - generic "All 20 cars moving along the circuit" [ref=f46e145]:
+                - img "P1 Jules Mercer, car 1" [ref=f46e146]
+                - img "P2 Alba Rossi, car 18" [ref=f46e148]
+                - img "P3 Luca Moreau, car 4" [ref=f46e150]
+                - img "P4 Mara Voss, car 27" [ref=f46e152]:
+                  - generic: "27"
+                - img "P5 Theo Park, car 81" [ref=f46e155]
+                - img "P6 Felix Ward, car 44" [ref=f46e157]
+                - img "P7 Eli Navarro, car 63" [ref=f46e159]:
+                  - generic: "63"
+                - img "P8 Niko Vale, car 14" [ref=f46e162]
+                - img "P9 Samir Khan, car 22" [ref=f46e164]
+                - img "P10 Iris Novak, car 2" [ref=f46e166]
+                - img "P11 Tom Bell, car 77" [ref=f46e168]
+                - img "P12 Mateo Cruz, car 11" [ref=f46e170]
+                - img "P13 Leo Hart, car 55" [ref=f46e172]
+                - img "P14 Finn Okada, car 30" [ref=f46e174]
+                - img "P15 Noah Price, car 20" [ref=f46e176]
+                - img "P16 Hugo Silva, car 23" [ref=f46e178]
+                - img "P17 Aria Laurent, car 10" [ref=f46e180]
+                - img "P18 Benji Stone, car 31" [ref=f46e182]
+                - img "P19 Milo Chen, car 6" [ref=f46e184]
+                - img "P20 Kai Morgan, car 99" [ref=f46e186]
+          - generic [ref=f46e188]:
+            - generic [ref=f46e189]: ⌖
+            - generic [ref=f46e190]:
+              - generic [ref=f46e191]: Pick a corner
+              - generic [ref=f46e192]: Tap a turn marker for the engineer's note.
+            - generic [ref=f46e193]: N ↑
+        - generic [ref=f46e194]:
+          - generic [ref=f46e195]: SECTOR 1
+          - generic [ref=f46e197]: SECTOR 2
+          - generic [ref=f46e199]: SECTOR 3
+          - generic [ref=f46e201]: 19 TURNS · 2 DRS ZONES
+        - generic [ref=f46e202]: LA SOURCE · EAU ROUGE · RAIDILLON · LES COMBES · BRUXELLES · POUHON · STAVELOT · BLANCHIMONT · BUS STOP
+        - generic [ref=f46e203]:
+          - text: "Map:"
+          - link "2022 F1 CourseLayout · Wikimedia Commons" [ref=f46e204] [cursor=pointer]:
+            - /url: https://commons.wikimedia.org/wiki/File:2022_F1_CourseLayout_Belgium.svg
+          - text: · ごひょううべこ · CC BY-SA 4.0
+      - complementary [ref=f46e205]:
+        - article [ref=f46e206]:
+          - generic [ref=f46e207]:
+            - generic [ref=f46e208]:
+              - paragraph [ref=f46e209]: THE PLAN (SUBJECT TO WEATHER)
+              - heading "Strategy desk" [level=2] [ref=f46e210]
+            - generic [ref=f46e211]: PLAN A
+          - generic [ref=f46e212]:
+            - generic [ref=f46e213]: "27"
+            - generic [ref=f46e214]: MARA 1 STOP
+            - generic [ref=f46e215]: MEDIUM
+          - generic [ref=f46e219]:
+            - generic [ref=f46e220]: ↘
+            - generic [ref=f46e221]:
+              - generic [ref=f46e222]: "Box window: laps 20–22"
+              - generic [ref=f46e223]:
+                - text: Next stop on lap
+                - strong [ref=f46e224]: "20"
+                - text: . Hold position, keep it tidy.
+            - button "Toggle pit stop plan" [ref=f46e225] [cursor=pointer]: ✓
+          - generic [ref=f46e226]:
+            - generic [ref=f46e227]: "63"
+            - generic [ref=f46e228]: ELI 1 STOP
+            - generic [ref=f46e229]: SOFT
+          - generic [ref=f46e233]:
+            - generic [ref=f46e234]: TYRE DEG ESTIMATE
+            - generic [ref=f46e235]: 0.08s / lap ↗
+        - article [ref=f46e236]:
+          - generic [ref=f46e237]:
+            - generic [ref=f46e238]:
+              - paragraph [ref=f46e239]: FIA RACE CONTROL
+              - heading "All quiet-ish" [level=2] [ref=f46e240]
+            - generic [ref=f46e241]: LIVE
+          - generic [ref=f46e243]:
+            - generic [ref=f46e244]: ▰
+            - generic [ref=f46e245]:
+              - generic [ref=f46e246]: Green flag
+              - generic [ref=f46e247]: Track clear across all sectors
+            - generic [ref=f46e248]: FORMATION
+          - button "! Incident noted Eau Rouge · car 22, rejoined safely ⌄" [ref=f46e249] [cursor=pointer]:
+            - generic [ref=f46e250]: "!"
+            - generic [ref=f46e251]:
+              - generic [ref=f46e252]: Incident noted
+              - generic [ref=f46e253]: Eau Rouge · car 22, rejoined safely
+            - generic [ref=f46e254]: ⌄
+          - generic [ref=f46e255]:
+            - generic [ref=f46e256]: SAFETY CAR —
+            - generic [ref=f46e257]: VSC —
+            - generic [ref=f46e258]: PENALTIES NONE
+    - generic [ref=f46e259]:
+      - article [ref=f46e260]:
+        - generic [ref=f46e261]:
+          - generic [ref=f46e262]:
+            - paragraph [ref=f46e263]: THE PACE IS REAL. THE DATA ISN'T.
+            - heading "Race picture" [level=2] [ref=f46e264]
+          - tablist "Race chart" [ref=f46e265]:
+            - tab "LAP TIME" [selected] [ref=f46e266] [cursor=pointer]
+            - tab "POSITION" [ref=f46e267] [cursor=pointer]
+            - tab "SECTORS" [ref=f46e268] [cursor=pointer]
+        - generic [ref=f46e269]:
+          - generic [ref=f46e270]: Lap time · no laps yet
+          - generic [ref=f46e271]: 1:47.228 reference pace
+        - generic "Race performance chart" [ref=f46e272]:
+          - img "Lap time · no laps yet" [ref=f46e273]:
+            - generic [ref=f46e274]: No laps completed
+        - generic [ref=f46e275]:
+          - generic [ref=f46e276]: "VOSS #27"
+          - generic [ref=f46e278]: "NAVARRO #63"
+          - generic [ref=f46e280]: ILLUSTRATIVE RACE DATA
+      - article [ref=f46e281]:
+        - generic [ref=f46e282]:
+          - generic [ref=f46e283]:
+            - paragraph [ref=f46e284]: THE LITTLE BITS ADD UP
+            - heading "Sector split" [level=2] [ref=f46e285]
+          - generic [ref=f46e286]: FORMATION
+        - generic [ref=f46e287]:
+          - generic [ref=f46e288]: DRIVER
+          - generic [ref=f46e289]:
+            - text: S1
+            - generic [ref=f46e290]: La Source → Raidillon
+          - generic [ref=f46e291]:
+            - text: S2
+            - generic [ref=f46e292]: Les Combes → Fagnes
+          - generic [ref=f46e293]:
+            - text: S3
+            - generic [ref=f46e294]: Stavelot → Bus Stop
+        - generic [ref=f46e295]:
+          - generic [ref=f46e296]: VOSS
+          - generic [ref=f46e298]: "32.275"
+          - generic [ref=f46e299]: "41.435"
+          - generic [ref=f46e300]: "33.276"
+        - generic [ref=f46e301]:
+          - generic [ref=f46e302]: NAVARRO
+          - generic [ref=f46e304]: "32.441"
+          - generic [ref=f46e305]: "41.329"
+          - generic [ref=f46e306]: "33.579"
+        - generic [ref=f46e307]:
+          - generic [ref=f46e308]: BEST IN SECTOR
+          - generic [ref=f46e309]:
+            - text: VOSS
+            - generic [ref=f46e310]: −0.166
+          - generic [ref=f46e311]:
+            - text: NAVARRO
+            - generic [ref=f46e312]: −0.106
+          - generic [ref=f46e313]:
+            - text: VOSS
+            - generic [ref=f46e314]: −0.303
+        - generic [ref=f46e315]:
+          - generic [ref=f46e316]: ✳
+          - paragraph [ref=f46e317]: No laps run yet. Sector data lands after the first flying lap at Spa.
+    - generic [ref=f46e318]:
+      - generic [ref=f46e319]: APEX GP · RACE STRATEGY HQ
+      - generic [ref=f46e320]: FICTIONAL TEAM · FICTIONAL DATA · VERY REAL WEATHER MOOD
+      - generic [ref=f46e321]: NO RADIO. JUST VIBES.
+  - status
