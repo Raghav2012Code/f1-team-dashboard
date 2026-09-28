@@ -253,8 +253,14 @@ function updateStintVisuals() {
       ? (onSecond ? pitWindowStart : Math.min(lap, pitWindowStart))
       : lap;
     const secondLength = onSecond ? lap - pitWindowStart : 0;
-    firstBar.style.width = `${Math.max(0, (firstLength / totalLaps) * 100)}%`;
-    secondBar.style.width = `${Math.max(0, (secondLength / totalLaps) * 100)}%`;
+    const firstShare = Math.max(0, (firstLength / totalLaps) * 100);
+    const secondShare = Math.max(0, (secondLength / totalLaps) * 100);
+    firstBar.style.width = `${firstShare}%`;
+    secondBar.style.width = `${secondShare}%`;
+    // Collapse a stint that has not started. A 0%-wide bar still renders its
+    // 7px of horizontal padding, which reads as a stray colour block.
+    firstBar.classList.toggle('is-empty', firstShare === 0);
+    secondBar.classList.toggle('is-empty', secondShare === 0);
     const laps = (n) => `${n} lap${n === 1 ? '' : 's'}`;
     firstBar.querySelector('b').textContent = laps(firstLength);
     secondBar.querySelector('b').textContent = onSecond ? laps(secondLength) : 'planned';
@@ -264,6 +270,10 @@ function updateStintVisuals() {
     const compound = onSecond ? plan.second : plan.first;
     const chip = $(`[data-compound="${key}"]`);
     if (chip) chip.textContent = plan.labels[compound];
+    // The strategy dot and the driver card chip both follow the compound, so
+    // the colour still says "soft" after the stop onto mediums.
+    const dot = $(`[data-compound-dot="${key}"]`);
+    if (dot) dot.className = `compound ${compound}-compound`;
     const card = $(`[data-driver="${key}"] .tyre-chip`);
     if (card) {
       const code = { soft: 'SOFT', medium: 'MED', hard: 'HARD' }[compound];
@@ -493,17 +503,15 @@ function updateRaceReadouts() {
   $('#lapReadout').textContent = `LAP ${lap} / ${totalLaps}`;
   $('#progressFill').style.width = `${(lap / totalLaps) * 100}%`;
   updateLapBadges();
-  $('#maraAge').textContent = `${maraAge} LAPS`;
-  $('#eliAge').textContent = `${eliAge} LAPS`;
-  // Absent when Plan B is active: the note says "fresh look required" instead.
+  $('#maraAge').textContent = `${maraAge} LAP${maraAge === 1 ? '' : 'S'}`;
+  $('#eliAge').textContent = `${eliAge} LAP${eliAge === 1 ? '' : 'S'}`;
+  // Two swappable pieces rather than an innerHTML rewrite: rebuilding the
+  // note on every tick would recreate the #stopCountdown node each time.
+  const lead = $('#stopLead');
   const countdown = $('#stopCountdown');
-  if (countdown) {
-    if (stopCompleted) {
-      countdown.textContent = `lap ${pitWindowStart}, done`;
-    } else {
-      const toStop = pitWindowStart - lap;
-      countdown.textContent = toStop > 0 ? `lap ${pitWindowStart}` : toStop === 0 ? 'this lap' : 'window open';
-    }
+  if (lead && countdown) {
+    lead.textContent = stopCompleted ? 'Boxed on lap' : 'Next stop on lap';
+    countdown.textContent = String(pitWindowStart);
   }
   updateStintVisuals();
   // The cap is the full race distance, so the countdown and the lap counter
@@ -600,10 +608,11 @@ const NARRRO_SHAPE = [78, 73, 70, 77, 57, 61, 53, 55, 37, 42, 47, 39];
 const POSITION_SHAPE = [25, 25, 42, 42, 42, 42, 42, 42, 42, 42, 40, 42];
 const NAVARRO_POSITION_SHAPE = [58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 56, 58];
 
-function chartWindow(count) {
-  const taken = Math.max(2, Math.min(CHART_WINDOW, count));
-  const end = Math.max(taken, count);
-  const start = Math.max(1, end - taken + 1);
+// The laps actually completed, most recent last. Empty on the grid: the chart
+// must not invent points for laps that have not been run.
+function chartWindow(run) {
+  const end = Math.max(0, run);
+  const start = Math.max(1, end - CHART_WINDOW + 1);
   return Array.from({ length: end - start + 1 }, (unused, i) => start + i);
 }
 
@@ -611,27 +620,35 @@ function sliceShape(shape, labels) {
   return labels.map((lapNumber) => shape[(lapNumber - 1) % shape.length]);
 }
 
+function lapNoun(count) {
+  return `${count} lap${count === 1 ? '' : 's'}`;
+}
+
 function chartDataFor() {
-  const run = Math.max(lap, 1);
-  const paceLabels = chartWindow(run).map(String);
-  const positionLabels = chartWindow(run).map(String);
+  const paceLaps = chartWindow(lap);
+  const positionLaps = chartWindow(lap);
+  const paceLabels = paceLaps.map(String);
+  const positionLabels = positionLaps.map(String);
+  const noData = paceLaps.length === 0;
   return {
     pace: {
-      title: `Lap time · last ${paceLabels.length} laps`,
-      stat: () => `<b>${formatLapTime(activeCircuit.lapBase)}</b> <i>−0.4s vs. field</i>`,
+      title: noData ? 'Lap time · no laps yet' : `Lap time · last ${lapNoun(paceLaps.length)}`,
+      stat: () => (noData
+        ? `<b>${formatLapTime(activeCircuit.lapBase)}</b> <i>reference pace</i>`
+        : `<b>${formatLapTime(activeCircuit.lapBase)}</b> <i>−0.4s vs. field</i>`),
       labels: paceLabels,
-      a: sliceShape(PACE_SHAPE, paceLabels.map(Number)),
-      b: sliceShape(NARRRO_SHAPE, paceLabels.map(Number)),
+      a: sliceShape(PACE_SHAPE, paceLaps),
+      b: sliceShape(NARRRO_SHAPE, paceLaps),
     },
     position: {
-      title: `Race position · last ${positionLabels.length} laps`,
+      title: noData ? 'Race position · on the grid' : `Race position · last ${lapNoun(positionLaps.length)}`,
       stat: () => '<b>P4 / P7</b> <i>both holding</i>',
       labels: positionLabels,
-      a: sliceShape(POSITION_SHAPE, positionLabels.map(Number)),
-      b: sliceShape(NAVARRO_POSITION_SHAPE, positionLabels.map(Number)),
+      a: sliceShape(POSITION_SHAPE, positionLaps),
+      b: sliceShape(NAVARRO_POSITION_SHAPE, positionLaps),
     },
     sector: {
-      title: lap === 0 ? 'Sector pace · formation lap' : `Sector pace · lap ${lap}`,
+      title: noData ? 'Sector pace · no laps yet' : `Sector pace · lap ${lap}`,
       stat: () => '<b>−0.575s</b> <i>team delta</i>',
       labels: ['S1', 'S2', 'S3'], a: [55, 49, 31], b: [61, 44, 60],
     },
@@ -643,18 +660,29 @@ function drawChart(mode) {
   const data = chartDataFor()[mode];
   $('#chartTitle').textContent = data.title;
   $('#chartStat').innerHTML = typeof data.stat === 'function' ? data.stat() : data.stat;
-  const width = 620, height = 145, left = 30, right = 606, top = 10;
-  const x = (index) => left + index * ((right - left) / (data.labels.length - 1));
-  const points = (values) => values.map((y, i) => `${x(i)},${top + y}`).join(' ');
-  const gridLines = [25, 55, 85, 115].map((y) => `<line class="chart-grid" x1="${left}" y1="${y}" x2="${right}" y2="${y}"/>`).join('');
-  const axes = data.labels.map((label, i) => `<text class="chart-axis" text-anchor="middle" x="${x(i)}" y="138">${mode === 'pace' ? `L${label}` : label}</text>`).join('');
-  const markers = (values, className) => values.map((value, i) => `<circle class="${className}" cx="${x(i)}" cy="${top + value}" r="3.5"><title>${mode === 'pace' ? `Lap ${data.labels[i]}` : data.labels[i]}</title></circle>`).join('');
-  $('#chartArea').innerHTML = `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="${data.title} comparison chart">${gridLines}<polyline class="chart-line-yellow" points="${points(data.a)}"/><polyline class="chart-line-red" points="${points(data.b)}"/>${markers(data.a, 'chart-point-yellow')}${markers(data.b, 'chart-point-red')}${axes}</svg>`;
   $$('.chart-tab').forEach((button) => {
     const selected = button.dataset.chart === mode;
     button.classList.toggle('selected', selected);
     button.setAttribute('aria-selected', selected ? 'true' : 'false');
   });
+
+  const width = 620, height = 145, left = 30, right = 606, top = 10;
+  const gridLines = [25, 55, 85, 115].map((y) => `<line class="chart-grid" x1="${left}" y1="${y}" x2="${right}" y2="${y}"/>`).join('');
+
+  // Before the first lap there is nothing to plot, so show the grid and a
+  // line of copy rather than two invented data points.
+  if (!data.a.length) {
+    $('#chartArea').innerHTML = `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="${data.title}">${gridLines}<text class="chart-empty" x="${(left + right) / 2}" y="70" text-anchor="middle">No laps completed</text></svg>`;
+    return;
+  }
+
+  // A single point has no span to divide by, so centre it.
+  const span = data.labels.length - 1;
+  const x = (index) => (span <= 0 ? (left + right) / 2 : left + index * ((right - left) / span));
+  const points = (values) => values.map((y, i) => `${x(i)},${top + y}`).join(' ');
+  const axes = data.labels.map((label, i) => `<text class="chart-axis" text-anchor="middle" x="${x(i)}" y="138">${mode === 'pace' ? `L${label}` : label}</text>`).join('');
+  const markers = (values, className) => values.map((value, i) => `<circle class="${className}" cx="${x(i)}" cy="${top + value}" r="3.5"><title>${mode === 'pace' ? `Lap ${data.labels[i]}` : data.labels[i]}</title></circle>`).join('');
+  $('#chartArea').innerHTML = `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="${data.title} comparison chart">${gridLines}<polyline class="chart-line-yellow" points="${points(data.a)}"/><polyline class="chart-line-red" points="${points(data.b)}"/>${markers(data.a, 'chart-point-yellow')}${markers(data.b, 'chart-point-red')}${axes}</svg>`;
 }
 
 $$('.chart-tab').forEach((button) => button.addEventListener('click', () => drawChart(button.dataset.chart)));
@@ -674,12 +702,12 @@ function renderPitPlan() {
   $('#pitWindow').textContent = pitPlanActive
     ? `Box window: laps ${pitWindowStart}–${pitWindowEnd}`
     : 'Running the opening tyre to the flag';
-  // Plan B drops #stopCountdown entirely; updateRaceReadouts tolerates that.
-  $('.strategy-note small').innerHTML = pitPlanActive
-    ? 'Next stop on <strong id="stopCountdown"></strong>. Hold position, keep it tidy.'
-    : '<strong>No stop planned.</strong> The opening tyre goes the distance. Ambitious.';
-  // Plan B means no stop, so the flag clears and the window reopens on the
-  // next lap. Turning the plan back on does not retroactively add a stop.
+  // Plan A and Plan B are two separate elements, toggled with `hidden`, so
+  // neither can destroy the node the other depends on.
+  $('.plan-a-note').hidden = !pitPlanActive;
+  $('.plan-b-note').hidden = pitPlanActive;
+  // Plan B means no stop: the opening stint runs to the flag, so the flag
+  // clears and the window reopens.
   if (!pitPlanActive) stopCompleted = false;
   updateRaceReadouts();
 }

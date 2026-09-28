@@ -102,6 +102,36 @@ for (const rec of records) {
   }
 }
 
+// 6. Every compound class the JS writes must have a matching CSS colour rule,
+// or the dot/chip silently renders in the wrong colour after a pit stop.
+const css = read('styles.css');
+for (const compound of ['soft', 'medium', 'hard']) {
+  if (!new RegExp(`\\.${compound}-compound\\{[^}]*color:`).test(css)) {
+    note(`script.js can set "${compound}-compound" but styles.css has no colour rule for it`);
+  }
+  if (!new RegExp(`\\.tyre-chip\\.${compound}\\{`).test(css)) {
+    note(`script.js can set "tyre-chip ${compound}" but styles.css has no rule for it`);
+  }
+}
+
+// 7. Compounds used in a TYRE_PLANS entry must be one the stylesheet knows.
+const planBlock = (script.match(/const TYRE_PLANS = \{[\s\S]*?\n\};/) || [])[0] || '';
+for (const m of planBlock.matchAll(/\b(first|second):\s*'(\w+)'/g)) {
+  if (!new RegExp(`\\.${m[2]}-compound\\{`).test(css)) {
+    note(`TYRE_PLANS uses compound "${m[2]}" which styles.css does not define`);
+  }
+}
+
+// 8. Descendant selectors on flex containers silently change layout: wrapping
+// text in a <span> turns one flex child into several. Flag the containers
+// that hold venue/state text next to a tag.
+for (const sel of ['weather-title']) {
+  const rule = (css.match(new RegExp(`\\.${sel}\\{[^}]*\\}`)) || [])[0] || '';
+  if (/display:flex/.test(rule) && new RegExp(`\\.${sel} span\\{`).test(css)) {
+    note(`.${sel} is a flex container and has a descendant .${sel} span rule; use a class so a new wrapper does not change the child count`);
+  }
+}
+
 // Report
 if (problems.length === 0) {
   console.log('clean');

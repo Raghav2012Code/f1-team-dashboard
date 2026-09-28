@@ -175,12 +175,15 @@ It is not a style linter. It catches the four things that have actually broken t
 
 - **`$('#some-id')` in `script.js` with no matching id in `index.html`.** Renaming an id in the markup silently breaks the code that writes to it.
 - **A function that is declared but never called.** This is what an edit that swallows the tail of a function looks like: `node --check` passes, because the orphaned code is still valid JavaScript, it just references variables that are no longer in scope.
+- **A compound class the stylesheet does not define.** `script.js` rewrites `hard-compound` on the strategy dot at the pit stop; without a matching rule the dot keeps the previous colour and the label stops matching the swatch.
 - **Slug drift** between `circuits-data.js` and `circuit-routes.js`, and duplicate ids in the markup.
 - **Implausible circuit data** — a track temperature below the air temperature, a lap count outside the real 2026 range, a pit window that leaves no second stint.
 
 A few things worth knowing before you edit:
 
 - **`styles.css` is minified.** It's a single flattened file. Reformat it in your editor before making structural changes, and don't commit a whitespace-only reformat on its own — it makes reviews impossible.
+- **Wrapping text in a `<span>` can change layout.** Several containers are flex with `justify-content:space-between`, so each new element becomes a new flex child and the existing ones get spread apart. This is what turned the weather card into `SPA   , RIGHT NOW   LOCAL`. Give new wrappers a class and style them explicitly.
+- **Toggling `hidden` needs the global rule.** `[hidden]{display:none!important}` is in the reset for a reason: a component rule like `.strategy-note small{display:block}` outranks a bare `[hidden]`, so the attribute silently does nothing.
 - **The race clock is driven by real time.** `elapsedSeconds` accumulates from `requestAnimationFrame` deltas, clamped to 0–100ms per frame so a backgrounded tab cannot fast-forward the race and a timestamp reset cannot produce a negative lap. Lap maths depends on that clamp.
 - **`ADVANCE LAP` snaps rather than accumulates.** It sets `elapsedSeconds = (lap + 1) * lapSeconds` instead of `+= lapSeconds`. Repeated float addition drifts: at Melbourne's 80.1s lap, 58 additions land on 57.9999 and the race never reaches the flag. Don't "simplify" this back to `+=`.
 - **A new circuit needs two entries.** `circuits-data.js` for metadata, `circuit-routes.js` for the racing line. A missing route makes the selector fall back to Spa with a toast. Keep the slug lists in step — a slug in one file and not the other is a silent failure.
