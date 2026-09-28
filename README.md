@@ -35,9 +35,9 @@ There is nothing to build and nothing to install. Any static host (GitHub Pages,
 
 | Panel | What's on it |
 | --- | --- |
-| **Race strip** | Session status, lap counter, progress bar, live countdown to the 40-minute time cap, and an `ADVANCE LAP` button. |
+| **Race strip** | Session status, lap counter, progress bar, live countdown to the race distance, and an `ADVANCE LAP` button. |
 | **Driver cards** | Mara Voss (#27, P4, on mediums) and Eli Navarro (#63, P7, on softs) — position, gap ahead, last lap, tyre age, personal best. Click one to highlight that car on the map. |
-| **Weather card** | Air and track temperature, rain probability, wind, and an asphalt state readout. |
+| **Weather card** | Air and track temperature, rain probability, wind, and an asphalt state readout — per circuit. |
 | **Track map** | The real Spa layout with an interactive SVG overlay: twenty cars moving along the racing line, nineteen tappable turn markers, sector key, and per-corner engineer notes. |
 | **Circuit selector** | Swap the map for any of 23 official 2026 season circuits. The cars keep circulating along that circuit's mapped racing line. |
 | **Strategy desk** | Tyre stint bars per driver (completed and planned), the pit window, a live laps-until-stop counter, and a one-click toggle between Plan A and Plan B. |
@@ -51,9 +51,9 @@ There is nothing to build and nothing to install. Any static host (GitHub Pages,
 
 The dashboard is built to be poked at, so give it a minute:
 
-1. **Watch the clock.** The race advances on its own, one lap per ~107 seconds of real time. The tyre ages, the pit window countdown and the progress bar all move with it. Hit `ADVANCE LAP` to skip ahead. At lap 44 the chequered flag drops and the controls lock.
+1. **Watch the clock.** The race advances on its own, one lap per ~107 seconds of real time at Spa, faster on shorter circuits. The tyre ages, the pit window countdown, the two lap badges and the progress bar all move with it. Hit `ADVANCE LAP` to skip ahead. At the final lap the chequered flag drops and the controls lock.
 2. **Read a corner.** Click any of the 19 turn markers on the Spa map — or tab to one and press Enter. Each one has an engineer's note. `RESET VIEW` clears your selection.
-3. **Swap the circuit.** Change the dropdown from *Spa · live race* to Suzuka, Monza, Interlagos, anywhere. The map, length, lap count and credit line all update, and the field re-races on the new layout.
+3. **Swap the circuit.** Change the dropdown from *Spa · live race* to Suzuka, Monza, Interlagos, anywhere. The whole desk follows: map, race distance, lap clock, weather, sector names, the headline's corner name, and the field's pace. Monaco runs 78 laps, Las Vegas 50, and the race restarts on the new circuit.
 4. **Change the plan.** The `✓` on the strategy desk flips the strategy between Plan A and Plan B. The stint bars, the pit window text and the plan badge all react.
 5. **Switch drivers.** Click a driver card. The other car's marker dims on the map so you can follow one at a time.
 6. **Cycle the charts.** Lap time, position and sector pace are three different readings of the same ten laps.
@@ -87,6 +87,23 @@ assets/spa-francorchamps-map.svg   Bundled Spa layout, 19 turns + sector marking
 ```
 
 The two data files are plain globals — `OFFICIAL_F1_CIRCUITS` and `OFFICIAL_CIRCUIT_ROUTES` — read directly by `script.js`. Adding a circuit means adding an entry to both, keyed by the same slug.
+
+### What is real and what is invented
+
+`circuits-data.js` mixes both on purpose, and it is worth knowing which is which:
+
+| Field | Status |
+| --- | --- |
+| `name`, `length`, `laps`, `date` | Real, from the published 2026 calendar |
+| `mapUrl`, `eventUrl` | Real, served by Formula1.com |
+| `lapBase` | **Invented.** A plausible race lap per circuit, used for the clock, car speed and sector scaling |
+| `sectors`, `corner` | Real circuit features |
+| `weather` | **Invented.** Plausible conditions for that venue in that month — not a live feed |
+
+Two 2026 quirks are baked in and easy to trip over:
+
+- **The Bahrain GP is at Sepang.** The April race at Sakhir was cancelled, so Malaysia hosts the "Gulf Air Bahrain Grand Prix in Malaysia" in October: 56 laps of the 5.543 km Sepang circuit. The `bahrain` slug carries Sepang's venue, length, lap count and map. There is no 2026 race at Sakhir.
+- **There is no Saudi Arabian GP.** Jeddah was cancelled alongside Bahrain and not replaced, which is why the calendar has 23 rounds and not 24.
 
 ---
 
@@ -149,7 +166,9 @@ A few things worth knowing before you edit:
 
 - **`styles.css` is minified.** It's a single flattened file. Reformat it in your editor before making structural changes, and don't commit a whitespace-only reformat on its own — it makes reviews impossible.
 - **The race clock is driven by real time.** `elapsedSeconds` accumulates from `requestAnimationFrame` deltas, capped at 100ms per frame to survive tab throttling. Lap maths depends on that cap.
-- **A new circuit needs two entries.** `circuits-data.js` for metadata, `circuit-routes.js` for the racing line. A missing route makes the selector fall back to Spa with a toast.
+- **A new circuit needs two entries.** `circuits-data.js` for metadata, `circuit-routes.js` for the racing line. A missing route makes the selector fall back to Spa with a toast. Keep the slug lists in step — a slug in one file and not the other is a silent failure.
+- **The sector table has to stay honest.** The purple cell must be the faster of the two rows, and the "best in sector" footer must name whoever actually holds it. The margins live in `winnerMargins` in `script.js`.
+- **The time cap is derived, not configured.** It is `laps × lapBase`, so the clock and the lap counter always reach zero together. Don't reintroduce a fixed cap.
 - **Preserve the CC BY-SA attribution** on the Spa map if you touch that panel.
 
 ---

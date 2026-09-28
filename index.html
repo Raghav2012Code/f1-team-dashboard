@@ -12,20 +12,20 @@
     <header class="topbar">
       <a class="brand" href="#top" aria-label="Apex GP home"><span class="brand-mark">A</span><span>APEX<span class="brand-light"> / GP</span></span></a>
       <div class="event-name"><span class="live-dot"></span> RACE DESK <span class="event-divider">/</span> <span id="eventName">BELGIAN GRAND PRIX</span></div>
-      <div class="top-actions"><span class="weather-mini"><span>☁</span> 18° <i></i> 24°</span><button class="icon-button" id="soundToggle" aria-label="Toggle focus mode" title="Toggle focus mode">◎</button><button class="menu-button" id="menuButton" aria-expanded="false" aria-label="Open navigation">☰</button></div>
+      <div class="top-actions"><span class="weather-mini"><span id="weatherMiniIcon">☁</span> <span id="weatherMini">18°</span> <i></i> <span id="weatherMiniTrack">26°</span></span><button class="icon-button" id="soundToggle" aria-label="Toggle focus mode" title="Toggle focus mode">◎</button><button class="menu-button" id="menuButton" aria-expanded="false" aria-label="Open navigation">☰</button></div>
     </header>
     <nav class="quick-nav" aria-label="Dashboard sections"><a href="#circuit">Circuit</a><a href="#strategy">Strategy</a><a href="#analytics">Analytics</a><a href="#control">Race control</a></nav>
 
     <main id="top">
       <section class="race-strip" aria-label="Race status">
-        <div class="race-state"><span class="status-pill"><b></b> GREEN FLAG</span><span class="race-label"><span id="raceVenue">Belgium</span> <span>—</span> Sunday race</span></div>
+        <div class="race-state"><span class="status-pill"><b></b> GREEN FLAG</span><span class="race-label"><span id="raceVenue">Belgium</span> <span>—</span> <span id="raceDate">Sunday, 19 July</span></span></div>
         <div class="race-progress"><span class="mono" id="lapReadout">LAP 28 / 44</span><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><span class="mono muted" id="raceClock">30:22 TO 78:38 CAP</span></div>
         <button class="advance-button" id="advanceLap" title="Advance the race by one lap">ADVANCE LAP <span>＋</span></button>
       </section>
 
       <div class="page-heading">
-        <div><p class="eyebrow">Sunday, 24 September <span>/</span> <span id="heroCircuit">Spa-Francorchamps</span></p><h1 id="heroLine">One eye on the apex.<br /><em>The other on the tyres.</em></h1></div>
-        <div class="heading-note"><span class="note-mark">✳</span><span>Rain chance is 30%.<br /><b>So, naturally, we packed hope.</b></span></div>
+        <div><p class="eyebrow"><span id="heroDate">Sunday, 19 July</span> <span>/</span> <span id="heroCircuit">Spa-Francorchamps</span></p><h1 id="heroLine">One eye on the apex.<br /><em>The other on the tyres.</em></h1></div>
+        <div class="heading-note"><span class="note-mark">✳</span><span>Rain chance is <span id="rainChance">30%</span>.<br /><b>So, naturally, we packed hope.</b></span></div>
       </div>
 
       <section class="driver-row" aria-label="Driver standings">
@@ -39,7 +39,7 @@
           <div class="driver-main"><div><h2>Eli Navarro</h2><p>GAP TO P6 <strong>+1.306</strong></p></div><div class="driver-time"><span>LAST LAP</span><b data-lap="eli">1:47.591</b></div></div>
           <div class="driver-bottom"><span>TYRE AGE <b id="eliAge">8 LAPS</b></span><span>BEST <b data-best="eli">1:46.771</b></span><span class="select-driver">VIEW CAR ↗</span></div>
         </article>
-        <div class="weather-card"><div class="weather-title"><span id="weatherVenue">SPA</span>, RIGHT NOW <span>LOCAL</span></div><div class="weather-main"><span class="weather-icon">☁</span><strong>18°</strong><span class="weather-unit">AIR</span><span class="weather-sep"></span><strong>26°</strong><span class="weather-unit">TRACK</span></div><div class="weather-details"><span>RAIN <b>30%</b><i class="rain-meter"><i></i></i></span><span>WIND <b>NW 8 km/h</b></span><span>ASPHALT <b>DRY · COOLING</b></span></div></div>
+        <div class="weather-card"><div class="weather-title"><span id="weatherVenue">SPA</span>, RIGHT NOW <span>LOCAL</span></div><div class="weather-main"><span class="weather-icon" id="weatherIcon">☁</span><strong id="weatherAir">18°</strong><span class="weather-unit">AIR</span><span class="weather-sep"></span><strong id="weatherTrack">26°</strong><span class="weather-unit">TRACK</span></div><div class="weather-details"><span>RAIN <b id="weatherRain">30%</b><i class="rain-meter"><i id="rainMeterFill"></i></i></span><span>WIND <b id="weatherWind">NW 8 km/h</b></span><span>ASPHALT <b id="weatherAsphalt">DRY · COOLING</b></span></div></div>
       </section>
 
       <section class="main-grid">
@@ -93,7 +93,7 @@
 
           <article class="panel control-panel" id="control">
             <div class="panel-heading"><div><p class="eyebrow">FIA RACE CONTROL</p><h2>All quiet-ish</h2></div><span class="control-light"><i></i> LIVE</span></div>
-            <div class="control-status"><span class="flag-icon green-flag">▰</span><span><b>Green flag</b><small>Track clear across all sectors</small></span><span class="status-time">LAP 28</span></div>
+            <div class="control-status"><span class="flag-icon green-flag">▰</span><span><b>Green flag</b><small>Track clear across all sectors</small></span><span class="status-time" data-lap-badge>LAP 28</span></div>
             <button class="incident-row" id="incidentToggle" aria-expanded="false"><span class="flag-icon yellow-flag">!</span><span><b>Incident noted</b><small><span id="incidentCorner">Turn 9</span> · car 22, rejoined safely</small></span><span class="incident-chevron">⌄</span></button>
             <div class="incident-detail" id="incidentDetail">No investigation. No debris reported. Everyone may unclench.</div>
             <div class="control-footer"><span>SAFETY CAR <b>—</b></span><span>VSC <b>—</b></span><span>PENALTIES <b>NONE</b></span></div>
@@ -109,7 +109,7 @@
           <div class="chart-legend"><span><i class="chart-key yellow-key"></i> VOSS #27</span><span><i class="chart-key red-key"></i> NAVARRO #63</span><span class="chart-mock-note">ILLUSTRATIVE RACE DATA</span></div>
         </article>
         <article class="panel sector-panel">
-          <div class="panel-heading"><div><p class="eyebrow">THE LITTLE BITS ADD UP</p><h2>Sector split</h2></div><span class="sector-live">LAP 28</span></div>
+          <div class="panel-heading"><div><p class="eyebrow">THE LITTLE BITS ADD UP</p><h2>Sector split</h2></div><span class="sector-live" data-lap-badge>LAP 28</span></div>
           <div class="sector-head"><span>DRIVER</span><span>S1 <small id="sector1Name">LA SOURCE → RAIDILLON</small></span><span>S2 <small id="sector2Name">LES COMBES → FANGNES</small></span><span>S3 <small id="sector3Name">STAVELOT → BUS STOP</small></span></div>
           <div class="sector-driver"><span class="sector-driver-name"><i class="chart-key yellow-key"></i> VOSS</span><span class="personal-best">32.441</span><span>41.208</span><span>33.579</span></div>
           <div class="sector-driver"><span class="sector-driver-name"><i class="chart-key red-key"></i> NAVARRO</span><span>32.607</span><span class="personal-best">41.102</span><span>33.882</span></div>

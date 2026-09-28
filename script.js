@@ -141,7 +141,6 @@ function createCarMotion(driver, svgNamespace = 'http://www.w3.org/2000/svg') {
 // published splits (32.441 / 41.208 / 33.579) become the reference for every
 // other track by scaling with the circuit's own base lap time.
 const SPA_SECTOR_SPLITS = [32.441, 41.208, 33.579];
-const SPA_SECTOR_TOTAL = SPA_SECTOR_SPLITS.reduce((sum, value) => sum + value, 0);
 
 function sectorSplitsFor(baseLapSeconds) {
   const scale = baseLapSeconds / SPA_LAP_SECONDS;
@@ -170,17 +169,20 @@ function applyCircuitMotion(route) {
 }
 
 const circuitSelect = $('#circuitSelect');
+// The bundled Spa SVG is the "live race" view. It mirrors the `belgium` entry
+// in circuits-data.js, which is why the two agree on length, laps and lap time.
 const liveSpaMap = {
   slug: 'live-spa',
   name: 'Belgium · Spa-Francorchamps',
   shortName: 'Spa-Francorchamps',
   length: '7.004 km',
   laps: 44,
+  date: 'Sunday, 19 July',
   lapBase: 107.228,
   sectors: ['La Source → Raidillon', 'Les Combes → Fagnes', 'Stavelot → Bus Stop'],
   corner: 'Eau Rouge',
-  turn: 2,
   venue: 'Spa',
+  weather: { air: 18, track: 26, rain: 30, wind: 'NW 8 km/h', asphalt: 'DRY · COOLING' },
   image: 'assets/spa-francorchamps-map.svg',
   alt: 'Spa-Francorchamps track layout with all 19 numbered turns, sectors, and DRS detection zones',
 };
@@ -190,8 +192,10 @@ const raceEventNames = {
   miami: 'MIAMI GRAND PRIX', canada: 'CANADIAN GRAND PRIX', monaco: 'MONACO GRAND PRIX',
   'barcelona-catalunya': 'SPANISH GRAND PRIX', austria: 'AUSTRIAN GRAND PRIX',
   'great-britain': 'BRITISH GRAND PRIX', belgium: 'BELGIAN GRAND PRIX', hungary: 'HUNGARIAN GRAND PRIX',
-  netherlands: 'DUTCH GRAND PRIX', italy: 'ITALIAN GRAND PRIX', spain: 'SPAIN GRAND PRIX',
+  netherlands: 'DUTCH GRAND PRIX', italy: 'ITALIAN GRAND PRIX', spain: 'MADRID GRAND PRIX',
   azerbaijan: 'AZERBAIJAN GRAND PRIX', bahrain: 'BAHRAIN GRAND PRIX', singapore: 'SINGAPORE GRAND PRIX',
+  // 2026 special case: the Bahrain GP is being run at Sepang, Malaysia, after
+  // the April Sakhir round was cancelled.
   'united-states': 'UNITED STATES GRAND PRIX', mexico: 'MEXICAN GRAND PRIX', brazil: 'BRAZILIAN GRAND PRIX',
   'las-vegas': 'LAS VEGAS GRAND PRIX', qatar: 'QATAR GRAND PRIX',
   'united-arab-emirates': 'ABU DHABI GRAND PRIX',
@@ -216,6 +220,12 @@ function setMapCredit(label, url, detail, sourceLabel = 'Formula1.com · 2026') 
   credit.append(link, document.createTextNode(` · ${detail}`));
 }
 
+// Every "LAP 28" badge in the markup is a starting value; the live ones are
+// written by updateRaceReadouts.
+function updateLapBadges() {
+  $$('[data-lap-badge]').forEach((node) => { node.textContent = `LAP ${lap}`; });
+}
+
 // Everything the desk shows about *where* we are: venue, lap count, lap pace,
 // sector names, weather, and the copy that used to hardcode Spa.
 function applyCircuitContext(circuit) {
@@ -228,27 +238,75 @@ function applyCircuitContext(circuit) {
   const heroCorner = circuit.corner;
   $('#eventName').textContent = eventName;
   $('#raceVenue').textContent = circuit.name.split(' · ')[0];
+  $('#raceDate').textContent = circuit.date;
+  $('#heroDate').textContent = circuit.date;
   $('#heroCircuit').textContent = circuit.shortName || circuit.name;
   $('#heroLine').innerHTML = `One eye on ${heroCorner}.<br /><em>The other on the tyres.</em>`;
+  // Title-cased for the tab. "UNITED STATES GRAND PRIX" must not become
+  // "United states grand prix", so the small words stay lower and the rest
+  // keeps its original casing.
+  const titleWords = eventName.toLowerCase().split(' ');
+  const smallWords = new Set(['grand', 'prix', 'of', 'the', 'and', 'in']);
+  const documentTitle = titleWords
+    .map((word, index) => {
+      if (index > 0 && smallWords.has(word)) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(' ');
+  document.title = `Apex GP — ${documentTitle}`;
+
+  const { air, track, rain, wind, asphalt } = circuit.weather;
   $('#weatherVenue').textContent = (circuit.venue || circuit.shortName || circuit.name).toUpperCase();
+  const icon = rain >= 45 ? '☂' : rain >= 20 ? '☁' : '☀';
+  $('#weatherIcon').textContent = icon;
+  $('#weatherMiniIcon').textContent = icon;
+  $('#weatherAir').textContent = `${air}°`;
+  $('#weatherTrack').textContent = `${track}°`;
+  $('#weatherRain').textContent = `${rain}%`;
+  $('#rainChance').textContent = `${rain}%`;
+  $('#rainMeterFill').style.width = `${rain}%`;
+  $('#weatherWind').textContent = wind;
+  $('#weatherAsphalt').textContent = asphalt;
+  $('#weatherMini').textContent = `${air}°`;
+  $('#weatherMiniTrack').textContent = `${track}°`;
   $('#sector1Name').textContent = circuit.sectors[0];
   $('#sector2Name').textContent = circuit.sectors[1];
   $('#sector3Name').textContent = circuit.sectors[2];
   renderPitPlan();
   $('#incidentCorner').textContent = circuit.corner;
-  document.title = `Apex GP — ${eventName.charAt(0) + eventName.slice(1).toLowerCase()}`;
 
+  // The sector table has to stay internally consistent: the purple cell must
+  // be the faster of the two rows, and the "best in sector" footer must name
+  // whoever actually holds it. Spa's split gives Voss S1 and S3, Navarro S2,
+  // by margins of 0.166 / 0.106 / 0.303 against the session's 0.363 pace gap.
   const splits = sectorSplitsFor(circuit.lapBase);
+  const sectorWinners = ['mara', 'eli', 'mara'];
+  const winnerMargins = [0.166, 0.106, 0.303];
   const sectorRows = $$('.sector-driver');
-  const applyRow = (row, paceDelta) => {
+  const sectorTimes = sectorWinners.map((winner, index) => {
+    const reference = splits[index] + (winner === 'mara' ? 0 : TEAM_PACE_GAP / 3);
+    return winner === 'mara' ? reference - winnerMargins[index] : reference;
+  });
+  const applyRow = (row, isMara) => {
     if (!row) return;
     const cells = [...row.querySelectorAll('span')].filter((cell) => !cell.classList.contains('sector-driver-name'));
     cells.forEach((cell, index) => {
-      cell.textContent = (splits[index] + paceDelta / 3).toFixed(3);
+      const holdsPurple = (sectorWinners[index] === 'mara') === isMara;
+      // The winner's own time; the loser's is the winner's plus the margin.
+      const seconds = holdsPurple ? sectorTimes[index] : sectorTimes[index] + winnerMargins[index];
+      cell.textContent = seconds.toFixed(3);
+      cell.classList.toggle('personal-best', holdsPurple);
     });
   };
-  applyRow(sectorRows[0], 0);
-  applyRow(sectorRows[1], TEAM_PACE_GAP);
+  applyRow(sectorRows[0], true);
+  applyRow(sectorRows[1], false);
+
+  const bestInSector = $$('.sector-best span');
+  sectorWinners.forEach((winner, index) => {
+    const cell = bestInSector[index + 1];
+    if (!cell) return;
+    cell.innerHTML = `${winner === 'mara' ? 'VOSS' : 'NAVARRO'} <i>−${winnerMargins[index].toFixed(3)}</i>`;
+  });
 
   // LAST LAP is the current reference pace; BEST is a little quicker, as it
   // was on the original Spa card (1:47.228 last vs 1:46.902 best).
@@ -360,6 +418,7 @@ function updateRaceReadouts() {
   eliAge = ELI_TYRE_AGE_AT_START + completedLaps;
   $('#lapReadout').textContent = `LAP ${lap} / ${totalLaps}`;
   $('#progressFill').style.width = `${(lap / totalLaps) * 100}%`;
+  updateLapBadges();
   $('#maraAge').textContent = `${maraAge} LAPS`;
   $('#eliAge').textContent = `${eliAge} LAPS`;
   // Absent when Plan B is active: the note says "fresh look required" instead.
@@ -457,7 +516,7 @@ function drawChart(mode) {
   const data = chartData[mode];
   $('#chartTitle').textContent = data.title;
   $('#chartStat').innerHTML = typeof data.stat === 'function' ? data.stat() : data.stat;
-  const width = 620, height = 145, left = 30, right = 606, top = 10, bottom = 119;
+  const width = 620, height = 145, left = 30, right = 606, top = 10;
   const x = (index) => left + index * ((right - left) / (data.labels.length - 1));
   const points = (values) => values.map((y, i) => `${x(i)},${top + y}`).join(' ');
   const gridLines = [25, 55, 85, 115].map((y) => `<line class="chart-grid" x1="${left}" y1="${y}" x2="${right}" y2="${y}"/>`).join('');
