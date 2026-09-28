@@ -6,5 +6,6 @@ build/
 .env.*
 !.env.example
 .vercel
-.n# Playwright MCP scratch output
+
+# Playwright MCP scratch output
 .playwright-mcp/
