@@ -7,6 +7,7 @@ It is a **design and interaction exercise**, not a telemetry product. Every driv
 - **Stack:** HTML, CSS, and vanilla JavaScript. Nothing else.
 - **Dependencies:** none. No build step, no `npm install`, no framework.
 - **Size:** ~88 KB of code across five files, plus a 42 KB map asset.
+- **Race:** starts on the grid at lap 0 and runs to the selected circuit's real final lap.
 
 ---
 
@@ -35,12 +36,12 @@ There is nothing to build and nothing to install. Any static host (GitHub Pages,
 
 | Panel | What's on it |
 | --- | --- |
-| **Race strip** | Session status, lap counter, progress bar, live countdown to the race distance, and an `ADVANCE LAP` button. |
+| **Race strip** | Session status, lap counter, progress bar, live countdown to the race distance, and an `ADVANCE LAP` button. The race starts at **lap 0** and runs to the selected circuit's final lap. |
 | **Driver cards** | Mara Voss (#27, P4, on mediums) and Eli Navarro (#63, P7, on softs) — position, gap ahead, last lap, tyre age, personal best. Click one to highlight that car on the map. |
 | **Weather card** | Air and track temperature, rain probability, wind, and an asphalt state readout — per circuit. |
 | **Track map** | The real Spa layout with an interactive SVG overlay: twenty cars moving along the racing line, nineteen tappable turn markers, sector key, and per-corner engineer notes. |
 | **Circuit selector** | Swap the map for any of 23 official 2026 season circuits. The cars keep circulating along that circuit's mapped racing line. |
-| **Strategy desk** | Tyre stint bars per driver (completed and planned), the pit window, a live laps-until-stop counter, and a one-click toggle between Plan A and Plan B. |
+| **Strategy desk** | Tyre stint bars per driver that fill as the race runs, the pit window, the stop countdown, and a one-click toggle between Plan A (one stop) and Plan B (no stop). |
 | **Race control** | Current flag state, an expandable incident report, and safety car / VSC / penalty status. |
 | **Race picture** | A chart with three tabs — lap time, race position, and sector pace. Hand-drawn SVG, no charting library. |
 | **Sector split** | Per-driver sector times with personal-best highlighting, best-in-sector deltas, and a written insight. |
@@ -51,14 +52,15 @@ There is nothing to build and nothing to install. Any static host (GitHub Pages,
 
 The dashboard is built to be poked at, so give it a minute:
 
-1. **Watch the clock.** The race advances on its own, one lap per ~107 seconds of real time at Spa, faster on shorter circuits. The tyre ages, the pit window countdown, the two lap badges and the progress bar all move with it. Hit `ADVANCE LAP` to skip ahead. At the final lap the chequered flag drops and the controls lock.
-2. **Read a corner.** Click any of the 19 turn markers on the Spa map — or tab to one and press Enter. Each one has an engineer's note. `RESET VIEW` clears your selection.
-3. **Swap the circuit.** Change the dropdown from *Spa · live race* to Suzuka, Monza, Interlagos, anywhere. The whole desk follows: map, race distance, lap clock, weather, sector names, the headline's corner name, and the field's pace. Monaco runs 78 laps, Las Vegas 50, and the race restarts on the new circuit.
-4. **Change the plan.** The `✓` on the strategy desk flips the strategy between Plan A and Plan B. The stint bars, the pit window text and the plan badge all react.
-5. **Switch drivers.** Click a driver card. The other car's marker dims on the map so you can follow one at a time.
-6. **Cycle the charts.** Lap time, position and sector pace are three different readings of the same ten laps.
-7. **Enter focus mode.** The `◎` button in the top bar dims the analytics, weather and race control panels and highlights the map and strategy desk. The `☰` button is a mobile navigation drawer.
-8. **Resize the window.** The layout reflows at 1050px, 720px and 400px.
+1. **Run the race.** It loads on the grid at **lap 0** and advances on its own, one lap per ~107 seconds of real time at Spa, faster on shorter circuits. The tyre ages, the two lap badges, the stint bars and the progress bar all move with it. Hit `ADVANCE LAP` to skip ahead. The chequered flag drops on the circuit's real final lap and the controls lock.
+2. **Watch a pit stop.** Plan A pits around 45% of the way through — lap 20 at Spa, lap 35 at Monaco. On that lap the tyre age resets to zero and each driver picks up their second compound: Voss goes to hards, Navarro to mediums. Plan B skips the stop entirely and runs the opening tyre to the flag.
+3. **Read a corner.** Click any of the 19 turn markers on the Spa map — or tab to one and press Enter. Each one has an engineer's note. `RESET VIEW` clears your selection.
+4. **Swap the circuit.** Change the dropdown from *Spa · live race* to Suzuka, Monza, Interlagos, anywhere. The whole desk follows: map, race distance, lap clock, weather, sector names, the headline's corner name, and the field's pace. Monaco runs 78 laps, Las Vegas 50, and the race restarts on the grid.
+5. **Change the plan.** The `✓` on the strategy desk flips between Plan A and Plan B. Do it mid-race and the stint bars, tyre compound, pit window and plan badge all react.
+6. **Switch drivers.** Click a driver card. The other car's marker dims on the map so you can follow one at a time.
+7. **Cycle the charts.** Lap time, position and sector pace are three readings of the laps run so far; the x-axis follows the race as it goes.
+8. **Enter focus mode.** The `◎` button in the top bar dims the analytics, weather and race control panels and highlights the map and strategy desk. The `☰` button is a mobile navigation drawer.
+9. **Resize the window.** The layout reflows at 1050px, 720px and 400px.
 
 ---
 
@@ -84,6 +86,7 @@ script.js                      Race clock, map animation, charts, all interactio
 circuits-data.js               23 circuits: name, length, laps, map URL, event URL
 circuit-routes.js              Traced racing-line paths, keyed by circuit slug
 assets/spa-francorchamps-map.svg   Bundled Spa layout, 19 turns + sector markings
+tools-lint.cjs                 Static checks; see Contributing
 ```
 
 The two data files are plain globals — `OFFICIAL_F1_CIRCUITS` and `OFFICIAL_CIRCUIT_ROUTES` — read directly by `script.js`. Adding a circuit means adding an entry to both, keyed by the same slug.
@@ -162,13 +165,28 @@ Formula 1, the FIA and the circuit names used in this project are trademarks of 
 
 Small, focused pull requests are welcome — a corner note, a new circuit, a bug in the lap maths.
 
+Run the checks before you push:
+
+```bash
+node tools-lint.cjs
+```
+
+It is not a style linter. It catches the four things that have actually broken this project:
+
+- **`$('#some-id')` in `script.js` with no matching id in `index.html`.** Renaming an id in the markup silently breaks the code that writes to it.
+- **A function that is declared but never called.** This is what an edit that swallows the tail of a function looks like: `node --check` passes, because the orphaned code is still valid JavaScript, it just references variables that are no longer in scope.
+- **Slug drift** between `circuits-data.js` and `circuit-routes.js`, and duplicate ids in the markup.
+- **Implausible circuit data** — a track temperature below the air temperature, a lap count outside the real 2026 range, a pit window that leaves no second stint.
+
 A few things worth knowing before you edit:
 
 - **`styles.css` is minified.** It's a single flattened file. Reformat it in your editor before making structural changes, and don't commit a whitespace-only reformat on its own — it makes reviews impossible.
-- **The race clock is driven by real time.** `elapsedSeconds` accumulates from `requestAnimationFrame` deltas, capped at 100ms per frame to survive tab throttling. Lap maths depends on that cap.
+- **The race clock is driven by real time.** `elapsedSeconds` accumulates from `requestAnimationFrame` deltas, clamped to 0–100ms per frame so a backgrounded tab cannot fast-forward the race and a timestamp reset cannot produce a negative lap. Lap maths depends on that clamp.
+- **`ADVANCE LAP` snaps rather than accumulates.** It sets `elapsedSeconds = (lap + 1) * lapSeconds` instead of `+= lapSeconds`. Repeated float addition drifts: at Melbourne's 80.1s lap, 58 additions land on 57.9999 and the race never reaches the flag. Don't "simplify" this back to `+=`.
 - **A new circuit needs two entries.** `circuits-data.js` for metadata, `circuit-routes.js` for the racing line. A missing route makes the selector fall back to Spa with a toast. Keep the slug lists in step — a slug in one file and not the other is a silent failure.
 - **The sector table has to stay honest.** The purple cell must be the faster of the two rows, and the "best in sector" footer must name whoever actually holds it. The margins live in `winnerMargins` in `script.js`.
 - **The time cap is derived, not configured.** It is `laps × lapBase`, so the clock and the lap counter always reach zero together. Don't reintroduce a fixed cap.
+- **`applyCircuitContext` has a required order.** It sets `totalLaps`/`lapSeconds`, then writes the sector table, then resets the race, and only then calls `renderPitPlan()` and `updateSectorInsight()`. Both of those call `updateRaceReadouts()`, which reads the clock — run them before the reset and the new circuit's lap pace gets scored against the previous circuit's elapsed time.
 - **Preserve the CC BY-SA attribution** on the Spa map if you touch that panel.
 
 ---

@@ -30,12 +30,12 @@
 
       <section class="driver-row" aria-label="Driver standings">
         <article class="driver-card driver-one active-driver" data-driver="mara">
-          <div class="driver-top"><span class="position">P<span>4</span></span><span class="driver-number">27</span><span class="tyre-chip medium"><i></i> MED</span></div>
+          <div class="driver-top"><span class="position">P<span>4</span></span><span class="driver-number">27</span><span class="tyre-chip medium" data-tyre="mara"><i></i> MED</span></div>
           <div class="driver-main"><div><h2>Mara Voss</h2><p>GAP TO P3 <strong>+2.841</strong></p></div><div class="driver-time"><span>LAST LAP</span><b data-lap="mara">1:47.228</b></div></div>
           <div class="driver-bottom"><span>TYRE AGE <b id="maraAge">12 LAPS</b></span><span>BEST <b data-best="mara">1:46.902</b></span><span class="select-driver">VIEW CAR ↗</span></div>
         </article>
         <article class="driver-card driver-two" data-driver="eli">
-          <div class="driver-top"><span class="position">P<span>7</span></span><span class="driver-number">63</span><span class="tyre-chip soft"><i></i> SOFT</span></div>
+          <div class="driver-top"><span class="position">P<span>7</span></span><span class="driver-number">63</span><span class="tyre-chip soft" data-tyre="eli"><i></i> SOFT</span></div>
           <div class="driver-main"><div><h2>Eli Navarro</h2><p>GAP TO P6 <strong>+1.306</strong></p></div><div class="driver-time"><span>LAST LAP</span><b data-lap="eli">1:47.591</b></div></div>
           <div class="driver-bottom"><span>TYRE AGE <b id="eliAge">8 LAPS</b></span><span>BEST <b data-best="eli">1:46.771</b></span><span class="select-driver">VIEW CAR ↗</span></div>
         </article>
@@ -83,11 +83,11 @@
         <aside class="side-stack">
           <article class="panel strategy-panel" id="strategy">
             <div class="panel-heading"><div><p class="eyebrow">THE PLAN (SUBJECT TO WEATHER)</p><h2>Strategy desk</h2></div><span class="plan-badge">PLAN A</span></div>
-            <div class="strategy-driver"><span class="tiny-car yellow">27</span><span>MARA <small>1 STOP</small></span><b>MEDIUM <i class="compound medium-compound"></i></b></div>
-            <div class="stint-visual"><div class="stint-bar medium-bar" style="width:64%"><span>MEDIUM <b>12 laps</b></span></div><div class="stint-bar hard-bar" style="width:36%"><span>HARD <b>planned</b></span></div></div>
-            <div class="strategy-note"><span class="pit-icon">↘</span><span><b id="pitWindow">Box window: laps 31–33</b><small>Next stop in <strong id="stopCountdown">3 laps</strong>. Hold position, keep it tidy.</small></span><button id="pitPlan" aria-label="Toggle pit stop plan">✓</button></div>
-            <div class="strategy-driver second-strategy"><span class="tiny-car red">63</span><span>ELI <small>1 STOP</small></span><b>SOFT <i class="compound soft-compound"></i></b></div>
-            <div class="stint-visual"><div class="stint-bar soft-bar" style="width:47%"><span>SOFT <b>8 laps</b></span></div><div class="stint-bar medium-bar" style="width:53%"><span>MEDIUM <b>planned</b></span></div></div>
+            <div class="strategy-driver"><span class="tiny-car yellow">27</span><span>MARA <small>1 STOP</small></span><b><span data-compound="mara">MEDIUM</span> <i class="compound medium-compound" data-compound-dot="mara"></i></b></div>
+            <div class="stint-visual"><div class="stint-bar medium-bar" style="width:0%"><span>MEDIUM <b>0 laps</b></span></div><div class="stint-bar hard-bar" style="width:0%"><span>HARD <b>planned</b></span></div></div>
+            <div class="strategy-note"><span class="pit-icon">↘</span><span><b id="pitWindow">Box window: laps 20–22</b><small>Next stop on <strong id="stopCountdown">lap 20</strong>. Hold position, keep it tidy.</small></span><button id="pitPlan" aria-label="Toggle pit stop plan">✓</button></div>
+            <div class="strategy-driver second-strategy"><span class="tiny-car red">63</span><span>ELI <small>1 STOP</small></span><b><span data-compound="eli">SOFT</span> <i class="compound soft-compound" data-compound-dot="eli"></i></b></div>
+            <div class="stint-visual"><div class="stint-bar soft-bar" style="width:0%"><span>SOFT <b>0 laps</b></span></div><div class="stint-bar medium-bar" style="width:0%"><span>MEDIUM <b>planned</b></span></div></div>
             <div class="strategy-foot"><span>TYRE DEG ESTIMATE</span><span>0.08s / lap <b>↗</b></span></div>
           </article>
 
@@ -114,7 +114,7 @@
           <div class="sector-driver"><span class="sector-driver-name"><i class="chart-key yellow-key"></i> VOSS</span><span class="personal-best">32.441</span><span>41.208</span><span>33.579</span></div>
           <div class="sector-driver"><span class="sector-driver-name"><i class="chart-key red-key"></i> NAVARRO</span><span>32.607</span><span class="personal-best">41.102</span><span>33.882</span></div>
           <div class="sector-best"><span>BEST IN SECTOR</span><span>VOSS <i>−0.166</i></span><span>NAVARRO <i>−0.106</i></span><span>VOSS <i>−0.303</i></span></div>
-          <div class="sector-insight"><span>✳</span><p><b>Voss is gaining in sector 3.</b> Fresh-ish mediums help through the final chicane. Try not to tell her we said “fresh-ish”.</p></div>
+          <div class="sector-insight"><span>✳</span><p id="sectorInsight"><b>Voss is gaining in sector 3.</b> Fresh-ish mediums help through the final chicane. Try not to tell her we said “fresh-ish”.</p></div>
         </article>
       </section>
       <footer class="page-footer"><span>APEX GP <b>·</b> RACE STRATEGY HQ</span><span>FICTIONAL TEAM <b>·</b> FICTIONAL DATA <b>·</b> VERY REAL WEATHER MOOD</span><span>NO RADIO. JUST VIBES.</span></footer>
