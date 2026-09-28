@@ -122,25 +122,74 @@ function addFieldDots() {
       number.textContent = driver.number;
       marker.append(number);
     }
-    marker.append(createCarMotion(driver, svgNamespace));
     driver.marker = marker;
     markerLayer.append(marker);
+    placeDriver(driver);
   });
+}
+
+// Car motion is SVG SMIL, not CSS, so a prefers-reduced-motion rule cannot
+// reach it, and freezing it via repeatCount="1" does not work either: the
+// negative begin offset leaves the animation mid-iteration and it keeps
+// playing. So when the setting matches, no animation element is created at
+// all. Each car is placed once on the racing line and stays there. Watched
+// live, so toggling the OS setting takes effect without a reload.
+const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+let reducedMotion = reducedMotionQuery.matches;
+document.body.classList.toggle('reduced-motion', reducedMotion);
+
+function carPhase(driver) {
+  return ((0.37 - (driver.position - 4) * TRACK_GAP_PER_POSITION) % 1 + 1) % 1;
 }
 
 function createCarMotion(driver, svgNamespace = 'http://www.w3.org/2000/svg') {
   const motion = document.createElementNS(svgNamespace, 'animateMotion');
   const motionPathReference = document.createElementNS(svgNamespace, 'mpath');
-  const phase = ((0.37 - (driver.position - 4) * TRACK_GAP_PER_POSITION) % 1 + 1) % 1;
   const lapDuration = driver.lapSeconds / LAP_TIME_SCALE;
   motion.setAttribute('dur', `${lapDuration}s`);
-  motion.setAttribute('begin', `-${(phase * lapDuration).toFixed(2)}s`);
+  motion.setAttribute('begin', `-${(carPhase(driver) * lapDuration).toFixed(2)}s`);
   motion.setAttribute('repeatCount', 'indefinite');
   motion.setAttribute('rotate', 'auto');
   motionPathReference.setAttribute('href', '#circuitMotionPath');
   motionPathReference.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#circuitMotionPath');
   motion.append(motionPathReference);
   return motion;
+}
+
+// Attach motion, or pin the car at its phase point on the current route.
+function placeDriver(driver) {
+  const path = $('#circuitMotionPath');
+  const existing = driver.marker.querySelector('animateMotion');
+  if (reducedMotion) {
+    if (existing) driver.marker.removeChild(existing);
+    driver.marker.removeAttribute('transform');
+    if (path && typeof path.getPointAtLength === 'function' && path.getTotalLength() > 0) {
+      const point = path.getPointAtLength(carPhase(driver) * path.getTotalLength());
+      driver.marker.setAttribute('transform', `translate(${point.x.toFixed(2)} ${point.y.toFixed(2)})`);
+    }
+    return;
+  }
+  driver.marker.removeAttribute('transform');
+  if (existing) driver.marker.replaceChild(createCarMotion(driver), existing);
+  else driver.marker.append(createCarMotion(driver));
+}
+
+function applyReducedMotionPreference() {
+  const wasReduced = reducedMotion;
+  reducedMotion = reducedMotionQuery.matches;
+  document.body.classList.toggle('reduced-motion', reducedMotion);
+  if (reducedMotion === wasReduced) return;
+  applyCircuitMotion(currentRoute);
+  showToast(reducedMotion
+    ? 'Reduced motion on. The field is parked.'
+    : 'Motion restored. Back on the limit.');
+}
+
+if (typeof reducedMotionQuery.addEventListener === 'function') {
+  reducedMotionQuery.addEventListener('change', applyReducedMotionPreference);
+} else if (typeof reducedMotionQuery.addListener === 'function') {
+  // Safari before 14 only has the deprecated API.
+  reducedMotionQuery.addListener(applyReducedMotionPreference);
 }
 
 // Sector times are quoted against the base lap of the loaded circuit. Spa's
@@ -168,10 +217,7 @@ function applyCircuitMotion(route) {
   motionPath.setAttribute('d', route.d);
   // Markers only exist after addFieldDots(); the first route applies at boot.
   if (!fieldCars[0].marker) return;
-  fieldCars.forEach((driver) => {
-    const previousMotion = driver.marker.querySelector('animateMotion');
-    driver.marker.replaceChild(createCarMotion(driver), previousMotion);
-  });
+  fieldCars.forEach(placeDriver);
 }
 
 const circuitSelect = $('#circuitSelect');
