@@ -230,7 +230,7 @@ A note on writing tests here: drive the race through `runTo` / `runToLap`, which
 A few things worth knowing before you edit:
 
 - **`styles.css` is minified.** It's a single flattened file. Reformat it in your editor before making structural changes, and don't commit a whitespace-only reformat on its own — it makes reviews impossible.
-- **On Windows, don't read-modify-write these files through PowerShell.** `index.html`, `script.js` and `circuits-data.js` contain typographic characters (`·`, `—`, `→`, `°`, `☁`). `Get-Content` and `>` redirection use the system codepage, so a round trip through either transcodes the file to mojibake — the page then reads `Apex GP Ã¢â‚¬â€ Belgian grand prix`. No ASCII moves, so it is invisible in a diff. `tools-lint.cjs` fails on this pattern, but the real fix is to use a UTF-8-preserving editor, or do the edit in one UTF-8 process:
+- **On Windows, don't read-modify-write these files through PowerShell.** `index.html`, `script.js` and `circuits-data.js` contain typographic characters (`·`, `—`, `→`, `°`, `☁`). `Get-Content` and `>` redirection use the system codepage, so a round trip through either transcodes the file to mojibake — the tab title then reads `Apex GP <3-byte garbage> Belgian grand prix` instead of `Apex GP — Belgian grand prix`, and every `·` in the page doubles. No ASCII moves, so it is invisible in a diff. `tools-lint.cjs` fails on the pattern, but the real fix is to use a UTF-8-preserving editor, or do the edit in one UTF-8 process:
   ```bash
   node -e "const fs=require('fs');const p='script.js';const s=fs.readFileSync(p,'utf8');fs.writeFileSync(p,s.replace('old','new'),'utf8')"
   ```
