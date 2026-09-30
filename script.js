@@ -60,7 +60,7 @@ const turnNotes = {
   12: ['Fagnes', 'Quick left-right. Make the kerbs work for you, not the suspension bill.'],
   13: ['Campus', 'A brief breath before the final run. Brief is doing a lot of work there.'],
   14: ['Stavelot', 'Get the exit right and the next straight does the rest of the negotiating.'],
-  15: ['Paul FrÃƒÂ¨re', 'Carry the speed through the bend. The timing screen will notice.'],
+  15: ['Paul Frère', 'Carry the speed through the bend. The timing screen will notice.'],
   16: ['Curve 16', 'Smooth hands on the way toward Blanchimont. The car appreciates manners.'],
   17: ['Blanchimont', 'Flat in the dry. In the wet, suddenly everyone remembers their family.'],
   18: ['Bus Stop entry', 'Brake hard and place the car. This is not the moment for artistic kerb use.'],
@@ -87,7 +87,7 @@ function addFieldDots() {
     marker.setAttribute('aria-label', `P${driver.position} ${driver.name}, car ${driver.number}`);
 
     const title = document.createElementNS(svgNamespace, 'title');
-    title.textContent = `P${driver.position} Ã‚Â· ${driver.name} #${driver.number}`;
+    title.textContent = `P${driver.position} · ${driver.name} #${driver.number}`;
     marker.append(title);
     if (driver.driverKey) {
       const halo = document.createElementNS(svgNamespace, 'circle');
@@ -192,17 +192,17 @@ const circuitSelect = $('#circuitSelect');
 // in circuits-data.js, which is why the two agree on length, laps and lap time.
 const liveSpaMap = {
   slug: 'live-spa',
-  name: 'Belgium Ã‚Â· Spa-Francorchamps',
+  name: 'Belgium · Spa-Francorchamps',
   shortName: 'Spa-Francorchamps',
   length: '7.004km',
   laps: 44,
   date: 'Sunday, 19 July',
   country: 'Belgium',
   lapBase: 107.228,
-  sectors: ['La Source Ã¢â€ â€™ Raidillon', 'Les Combes Ã¢â€ â€™ Fagnes', 'Stavelot Ã¢â€ â€™ Bus Stop'],
+  sectors: ['La Source → Raidillon', 'Les Combes → Fagnes', 'Stavelot → Bus Stop'],
   corner: 'Eau Rouge',
   venue: 'Spa',
-  weather: { air: 18, track: 26, rain: 30, wind: 'NW 8 km/h', asphalt: 'DRY Ã‚Â· COOLING' },
+  weather: { air: 18, track: 26, rain: 30, wind: 'NW 8 km/h', asphalt: 'DRY · COOLING' },
   image: 'assets/spa-francorchamps-map.svg',
   alt: 'Spa-Francorchamps track layout with all 19 numbered turns, sectors, and DRS detection zones',
 };
@@ -219,7 +219,7 @@ const raceEventNames = {
   azerbaijan: 'AZERBAIJAN GRAND PRIX', bahrain: 'BAHRAIN GRAND PRIX', singapore: 'SINGAPORE GRAND PRIX',
   // 2026 special case: the Bahrain GP is being run at Sepang, Malaysia, after
   // the April Sakhir round was cancelled.
-  'united-states': 'UNITED STATES GRAND PRIX', mexico: 'MEXICO CITY GRAND PRIX', brazil: 'SÃƒÆ’O PAULO GRAND PRIX',
+  'united-states': 'UNITED STATES GRAND PRIX', mexico: 'MEXICO CITY GRAND PRIX', brazil: 'SÃO PAULO GRAND PRIX',
   'las-vegas': 'LAS VEGAS GRAND PRIX', qatar: 'QATAR GRAND PRIX',
   'united-arab-emirates': 'ABU DHABI GRAND PRIX',
   'live-spa': 'BELGIAN GRAND PRIX',
@@ -232,7 +232,7 @@ OFFICIAL_F1_CIRCUITS.forEach((circuit) => {
   circuitSelect.append(option);
 });
 
-function setMapCredit(label, url, detail, sourceLabel = 'Formula1.com Ã‚Â· 2026') {
+function setMapCredit(label, url, detail, sourceLabel = 'Formula1.com · 2026') {
   const credit = $('#mapCredit');
   credit.replaceChildren(document.createTextNode(`${label}: `));
   const link = document.createElement('a');
@@ -240,7 +240,7 @@ function setMapCredit(label, url, detail, sourceLabel = 'Formula1.com Ã‚Â· 
   link.target = '_blank';
   link.rel = 'noreferrer';
   link.textContent = sourceLabel;
-  credit.append(link, document.createTextNode(` Ã‚Â· ${detail}`));
+  credit.append(link, document.createTextNode(` · ${detail}`));
 }
 
 // The lap badges in race control and the sector panel are written from here.
@@ -309,7 +309,7 @@ function applyCircuitContext(circuit) {
   $('#eventName').textContent = eventName;
   // The host nation, not the display name's prefix: the Bahrain Grand Prix
   // races in Malaysia, and Las Vegas is in the United States.
-  $('#raceVenue').textContent = circuit.country || circuit.name.split(' Ã‚Â· ')[0];
+  $('#raceVenue').textContent = circuit.country || circuit.name.split(' · ')[0];
   $('#raceDate').textContent = circuit.date;
   $('#heroDate').textContent = circuit.date;
   $('#heroCircuit').textContent = circuit.shortName || circuit.name;
@@ -325,21 +325,21 @@ function applyCircuitContext(circuit) {
       return word.charAt(0).toUpperCase() + word.slice(1);
     })
     .join(' ');
-  document.title = `Apex GP Ã¢â‚¬â€ ${documentTitle}`;
+  document.title = `Apex GP — ${documentTitle}`;
   const { air, track, rain, wind, asphalt } = circuit.weather;
   $('#weatherVenue').textContent = (circuit.venue || circuit.shortName || circuit.name).toUpperCase();
-  const icon = rain >= 45 ? 'Ã¢Ëœâ€š' : rain >= 20 ? 'Ã¢ËœÂ' : 'Ã¢Ëœâ‚¬';
+  const icon = rain >= 45 ? '☂' : rain >= 20 ? '☁' : '☀';
   $('#weatherIcon').textContent = icon;
   $('#weatherMiniIcon').textContent = icon;
-  $('#weatherAir').textContent = `${air}Ã‚Â°`;
-  $('#weatherTrack').textContent = `${track}Ã‚Â°`;
+  $('#weatherAir').textContent = `${air}°`;
+  $('#weatherTrack').textContent = `${track}°`;
   $('#weatherRain').textContent = `${rain}%`;
   $('#rainChance').textContent = `${rain}%`;
   $('#rainMeterFill').style.width = `${rain}%`;
   $('#weatherWind').textContent = wind;
   $('#weatherAsphalt').textContent = asphalt;
-  $('#weatherMini').textContent = `${air}Ã‚Â°`;
-  $('#weatherMiniTrack').textContent = `${track}Ã‚Â°`;
+  $('#weatherMini').textContent = `${air}°`;
+  $('#weatherMiniTrack').textContent = `${track}°`;
   $('#sector1Name').textContent = circuit.sectors[0];
   $('#sector2Name').textContent = circuit.sectors[1];
   $('#sector3Name').textContent = circuit.sectors[2];
@@ -375,7 +375,7 @@ function applyCircuitContext(circuit) {
   sectorWinners.forEach((winner, index) => {
     const cell = bestInSector[index + 1];
     if (!cell) return;
-    cell.innerHTML = `${winner === 'mara' ? 'VOSS' : 'NAVARRO'} <i>Ã¢Ë†â€™${winnerMargins[index].toFixed(3)}</i>`;
+    cell.innerHTML = `${winner === 'mara' ? 'VOSS' : 'NAVARRO'} <i>−${winnerMargins[index].toFixed(3)}</i>`;
   });
 
   // LAST LAP is the current reference pace; BEST is a little quicker, as it
@@ -400,11 +400,11 @@ function applyCircuitContext(circuit) {
   // the top of this function, so there is no earlier state left for it to
   // score against the new lap pace even if the calls below are rearranged.
   $('#advanceLap').disabled = false;
-  $('#advanceLap').textContent = 'ADVANCE LAP Ã¯Â¼â€¹';
+  $('#advanceLap').textContent = 'ADVANCE LAP ＋';
   $('.status-pill').innerHTML = '<b></b> GREEN FLAG';
   $('.status-pill').style.color = '';
   $('.status-pill b').style.background = '';
-  $('#simulationLabel').textContent = circuit.slug === 'live-spa' ? '20 CARS MOVING' : '20 CARS Ã‚Â· TRACK SYNC';
+  $('#simulationLabel').textContent = circuit.slug === 'live-spa' ? '20 CARS MOVING' : '20 CARS · TRACK SYNC';
   $('#simulationState').classList.remove('sim-preview');
   // renderPitPlan() calls updateRaceReadouts(), so it has to run after the
   // reset above.
@@ -418,7 +418,7 @@ function applyCircuitContext(circuit) {
 function updateSectorInsight() {
   const circuit = raceState.circuit;
   if (!circuit) return;
-  const finale = circuit.sectors[2].split('Ã¢â€ â€™').pop().trim();
+  const finale = circuit.sectors[2].split('→').pop().trim();
   const who = 'Voss';
   $('#sectorInsight').innerHTML = raceState.lap === 0
     ? `<b>No laps run yet.</b> Sector data lands after the first flying lap at ${circuit.venue}.`
@@ -446,13 +446,13 @@ function showCircuitMap(slug = 'live-spa') {
     applyCircuitContext(liveSpaMap);
     $('#circuitName').textContent = liveSpaMap.shortName;
     $('#circuitLength').textContent = liveSpaMap.length;
-    $('#mapEyebrow').textContent = 'LIVE RACE MAP Ã‚Â· SPA-FRANCORCHAMPS';
+    $('#mapEyebrow').textContent = 'LIVE RACE MAP · SPA-FRANCORCHAMPS';
     movingLegend.forEach((item) => { item.hidden = false; });
     $('#mapFooter').hidden = false;
     $('#cornerLine').hidden = false;
-    $('#turnReadout').innerHTML = '<span class="turn-readout-icon">Ã¢Å’â€“</span><span><b>Pick a corner</b><small>Tap a turn marker for the engineer\'s note.</small></span><span class="map-north">N Ã¢â€ â€˜</span>';
-    $('#mapReset').innerHTML = 'RESET VIEW <span>Ã¢â€ Âº</span>';
-    setMapCredit('Map', 'https://commons.wikimedia.org/wiki/File:2022_F1_CourseLayout_Belgium.svg', 'Ã£Ââ€Ã£ÂÂ²Ã£â€šâ€¡Ã£Ââ€ Ã£Ââ€ Ã£ÂÂ¹Ã£Ââ€œ Ã‚Â· CC BY-SA 4.0', '2022 F1 CourseLayout Ã‚Â· Wikimedia Commons');
+    $('#turnReadout').innerHTML = '<span class="turn-readout-icon">⌖</span><span><b>Pick a corner</b><small>Tap a turn marker for the engineer\'s note.</small></span><span class="map-north">N ↑</span>';
+    $('#mapReset').innerHTML = 'RESET VIEW <span>↺</span>';
+    setMapCredit('Map', 'https://commons.wikimedia.org/wiki/File:2022_F1_CourseLayout_Belgium.svg', 'ごひょううべこ · CC BY-SA 4.0', '2022 F1 CourseLayout · Wikimedia Commons');
     return;
   }
 
@@ -468,14 +468,14 @@ function showCircuitMap(slug = 'live-spa') {
   trackOverlay.hidden = false;
   currentRoute = motionRoute;
   applyCircuitContext(circuit);
-  $('#circuitName').textContent = circuit.name.split(' Ã‚Â· ').slice(1).join(' Ã‚Â· ');
+  $('#circuitName').textContent = circuit.name.split(' · ').slice(1).join(' · ');
   $('#circuitLength').textContent = circuit.length;
-  $('#mapEyebrow').textContent = 'OFFICIAL F1 CIRCUIT MAP Ã‚Â· 2026';
+  $('#mapEyebrow').textContent = 'OFFICIAL F1 CIRCUIT MAP · 2026';
   movingLegend.forEach((item) => { item.hidden = false; });
   $('#mapFooter').hidden = true;
   $('#cornerLine').hidden = true;
-  $('#turnReadout').innerHTML = `<span class="turn-readout-icon">Ã¢Å’â€“</span><span><b>${circuit.name} Ã‚Â· ${circuit.laps} laps</b><small>Twenty cars follow this official layout's mapped racing line as the field runs.</small></span><a class="map-source-link" href="${circuit.eventUrl}" target="_blank" rel="noreferrer">SOURCE Ã¢â€ â€”</a>`;
-  $('#mapReset').innerHTML = 'BACK TO LIVE SPA <span>Ã¢â€ Â¶</span>';
+  $('#turnReadout').innerHTML = `<span class="turn-readout-icon">⌖</span><span><b>${circuit.name} · ${circuit.laps} laps</b><small>Twenty cars follow this official layout's mapped racing line as the field runs.</small></span><a class="map-source-link" href="${circuit.eventUrl}" target="_blank" rel="noreferrer">SOURCE ↗</a>`;
+  $('#mapReset').innerHTML = 'BACK TO LIVE SPA <span>↶</span>';
   setMapCredit('Official map', circuit.eventUrl, 'track diagram served by Formula1.com; markings kept as published');
 }
 
@@ -555,7 +555,7 @@ $$('.turn').forEach((turn) => {
     $$('.turn.selected').forEach((node) => node.classList.remove('selected'));
     turn.classList.add('selected');
     const [name, note] = turnNotes[turn.dataset.turn] || [`Turn ${turn.dataset.turn}`, 'Corner note pending. The map says corner; the pit wall agrees.'];
-    $('#turnReadout').innerHTML = `<span class="turn-readout-icon">Ã¢Å’â€“</span><span><b>Turn ${turn.dataset.turn} Ã‚Â· ${name}</b><small>${note}</small></span><span class="map-north">N Ã¢â€ â€˜</span>`;
+    $('#turnReadout').innerHTML = `<span class="turn-readout-icon">⌖</span><span><b>Turn ${turn.dataset.turn} · ${name}</b><small>${note}</small></span><span class="map-north">N ↑</span>`;
   };
   turn.addEventListener('click', activate);
   turn.addEventListener('keydown', (event) => {
@@ -586,7 +586,7 @@ function chartDataFor() {
       title: RACE_STATE.chartTitleFor('pace', raceState),
       stat: () => (RACE_STATE.chartIsEmpty('pace', raceState)
         ? `<b>${reference}</b> <i>reference pace</i>`
-        : `<b>${reference}</b> <i>Ã¢Ë†â€™0.4s vs. field</i>`),
+        : `<b>${reference}</b> <i>−0.4s vs. field</i>`),
       ...pace,
     },
     position: {
@@ -596,7 +596,7 @@ function chartDataFor() {
     },
     sector: {
       title: RACE_STATE.chartTitleFor('sector', raceState),
-      stat: () => '<b>Ã¢Ë†â€™0.575s</b> <i>team delta</i>',
+      stat: () => '<b>−0.575s</b> <i>team delta</i>',
       ...sector,
     },
   };
@@ -643,7 +643,7 @@ $('#incidentToggle').addEventListener('click', () => {
 
 function renderPitPlan() {
   const button = $('#pitPlan');
-  button.textContent = raceState.pitPlanActive ? 'Ã¢Å“â€œ' : 'Ãƒâ€”';
+  button.textContent = raceState.pitPlanActive ? '✓' : '×';
   button.classList.toggle('unplanned', !raceState.pitPlanActive);
   $('.plan-badge').textContent = raceState.pitPlanActive ? 'PLAN A' : 'PLAN B?';
   $('#pitWindow').textContent = RACE_STATE.pitWindowLabel(raceState);
@@ -669,14 +669,14 @@ $('#mapReset').addEventListener('click', () => {
     return;
   }
   $$('.turn.selected').forEach((node) => node.classList.remove('selected'));
-  $('#turnReadout').innerHTML = '<span class="turn-readout-icon">Ã¢Å’â€“</span><span><b>Pick a corner</b><small>Tap a turn marker for the engineer\'s note.</small></span><span class="map-north">N Ã¢â€ â€˜</span>';
+  $('#turnReadout').innerHTML = '<span class="turn-readout-icon">⌖</span><span><b>Pick a corner</b><small>Tap a turn marker for the engineer\'s note.</small></span><span class="map-north">N ↑</span>';
   $$('.team-car-dot').forEach((marker) => { marker.style.opacity = '1'; });
   showToast('Map reset. Spa remains stubbornly the same shape.');
 });
 
 $('#soundToggle').setAttribute('aria-label', 'Toggle focus mode');
 $('#soundToggle').title = 'Toggle focus mode';
-$('#soundToggle').textContent = 'Ã¢â€”Å½';
+$('#soundToggle').textContent = '◎';
 $('#soundToggle').addEventListener('click', (event) => {
   document.body.classList.toggle('focus-mode');
   const active = document.body.classList.contains('focus-mode');

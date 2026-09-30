@@ -230,6 +230,10 @@ A note on writing tests here: drive the race through `runTo` / `runToLap`, which
 A few things worth knowing before you edit:
 
 - **`styles.css` is minified.** It's a single flattened file. Reformat it in your editor before making structural changes, and don't commit a whitespace-only reformat on its own — it makes reviews impossible.
+- **On Windows, don't read-modify-write these files through PowerShell.** `index.html`, `script.js` and `circuits-data.js` contain typographic characters (`·`, `—`, `→`, `°`, `☁`). `Get-Content` and `>` redirection use the system codepage, so a round trip through either transcodes the file to mojibake — the page then reads `Apex GP Ã¢â‚¬â€ Belgian grand prix`. No ASCII moves, so it is invisible in a diff. `tools-lint.cjs` fails on this pattern, but the real fix is to use a UTF-8-preserving editor, or do the edit in one UTF-8 process:
+  ```bash
+  node -e "const fs=require('fs');const p='script.js';const s=fs.readFileSync(p,'utf8');fs.writeFileSync(p,s.replace('old','new'),'utf8')"
+  ```
 - **Wrapping text in a `<span>` can change layout.** Several containers are flex with `justify-content:space-between`, so each new element becomes a new flex child and the existing ones get spread apart. This is what turned the weather card into `SPA   , RIGHT NOW   LOCAL`. Give new wrappers a class and style them explicitly.
 - **Toggling `hidden` needs the global rule.** `[hidden]{display:none!important}` is in the reset for a reason: a component rule like `.strategy-note small{display:block}` outranks a bare `[hidden]`, so the attribute silently does nothing.
 - **The race clock is driven by real time.** `elapsedSeconds` accumulates from `requestAnimationFrame` deltas, clamped to 0–100ms per frame so a backgrounded tab cannot fast-forward the race and a timestamp reset cannot produce a negative lap. Lap maths depends on that clamp.
