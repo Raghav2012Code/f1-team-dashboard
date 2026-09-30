@@ -1,37 +1,22 @@
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
-// The race runs from the grid: lap 0 through to the circuit's final lap.
-let lap = 0;
-let maraAge = 0;
-let eliAge = 0;
-let totalLaps = 44;
-let lapSeconds = 107.228;
-let pitWindowStart = 22;
-let pitWindowEnd = 24;
-let activeCircuit = null;
+// Everything about where we are in the race lives in this one object. The
+// clock, lap, stop and flag fields are written only by RACE_STATE.reset(),
+// .advanceLap(), .tick() and .sync() -- tools-lint.cjs fails the build if this
+// file assigns them directly. That is what turns the call order inside
+// applyCircuitContext from something a comment has to remember into something
+// the linter enforces.
+const raceState = RACE_STATE.create();
+
 let toastTimer;
 let selectedDriver = 'mara';
 let chartMode = 'pace';
-let pitPlanActive = true;
-let stopCompleted = false;
-const SPA_LAP_SECONDS = 107.228;
-const TEAM_PACE_GAP = 0.363;
-const START_LAP = 0;
 const TRACK_GAP_PER_POSITION = 0.05;
-// Each driver runs a one-stop plan: an opening compound, then a second.
-const TYRE_PLANS = {
-  mara: { first: 'medium', second: 'hard', labels: { medium: 'MEDIUM', hard: 'HARD' } },
-  eli: { first: 'soft', second: 'medium', labels: { soft: 'SOFT', medium: 'MEDIUM' } },
-};
 // A real lap is far too slow to watch, so car motion runs at 3x real time.
 const LAP_TIME_SCALE = 3;
 const SPA_MOTION_PATH = $('#circuitMotionPath').getAttribute('d');
 let currentRoute = { width: 550, height: 443.7, d: SPA_MOTION_PATH };
-let elapsedSeconds = 0;
-let lastFrameTime = 0;
-let lastDisplayedSecond = -1;
-let raceFinished = false;
 
 const fieldCars = [
   { position: 1, name: 'Jules Mercer', number: 1, paceOffset: -0.088 },
@@ -75,7 +60,7 @@ const turnNotes = {
   12: ['Fagnes', 'Quick left-right. Make the kerbs work for you, not the suspension bill.'],
   13: ['Campus', 'A brief breath before the final run. Brief is doing a lot of work there.'],
   14: ['Stavelot', 'Get the exit right and the next straight does the rest of the negotiating.'],
-  15: ['Paul Frère', 'Carry the speed through the bend. The timing screen will notice.'],
+  15: ['Paul FrÃƒÂ¨re', 'Carry the speed through the bend. The timing screen will notice.'],
   16: ['Curve 16', 'Smooth hands on the way toward Blanchimont. The car appreciates manners.'],
   17: ['Blanchimont', 'Flat in the dry. In the wet, suddenly everyone remembers their family.'],
   18: ['Bus Stop entry', 'Brake hard and place the car. This is not the moment for artistic kerb use.'],
@@ -102,7 +87,7 @@ function addFieldDots() {
     marker.setAttribute('aria-label', `P${driver.position} ${driver.name}, car ${driver.number}`);
 
     const title = document.createElementNS(svgNamespace, 'title');
-    title.textContent = `P${driver.position} · ${driver.name} #${driver.number}`;
+    title.textContent = `P${driver.position} Ã‚Â· ${driver.name} #${driver.number}`;
     marker.append(title);
     if (driver.driverKey) {
       const halo = document.createElementNS(svgNamespace, 'circle');
@@ -192,24 +177,6 @@ if (typeof reducedMotionQuery.addEventListener === 'function') {
   reducedMotionQuery.addListener(applyReducedMotionPreference);
 }
 
-// Sector times are quoted against the base lap of the loaded circuit. Spa's
-// published splits (32.441 / 41.208 / 33.579) become the reference for every
-// other track by scaling with the circuit's own base lap time.
-const SPA_SECTOR_SPLITS = [32.441, 41.208, 33.579];
-
-function sectorSplitsFor(baseLapSeconds) {
-  const scale = baseLapSeconds / SPA_LAP_SECONDS;
-  return SPA_SECTOR_SPLITS.map((value) => value * scale);
-}
-
-function formatLapTime(totalSeconds) {
-  const safe = Math.max(0, totalSeconds);
-  const minutes = Math.floor(safe / 60);
-  const seconds = Math.floor(safe % 60);
-  const milliseconds = Math.round((safe - Math.floor(safe)) * 1000);
-  return `${minutes}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
-}
-
 function applyCircuitMotion(route) {
   const trackOverlay = $('#trackOverlay');
   const motionPath = $('#circuitMotionPath');
@@ -225,17 +192,17 @@ const circuitSelect = $('#circuitSelect');
 // in circuits-data.js, which is why the two agree on length, laps and lap time.
 const liveSpaMap = {
   slug: 'live-spa',
-  name: 'Belgium · Spa-Francorchamps',
+  name: 'Belgium Ã‚Â· Spa-Francorchamps',
   shortName: 'Spa-Francorchamps',
-  length: '7.004 km',
+  length: '7.004km',
   laps: 44,
   date: 'Sunday, 19 July',
   country: 'Belgium',
   lapBase: 107.228,
-  sectors: ['La Source → Raidillon', 'Les Combes → Fagnes', 'Stavelot → Bus Stop'],
+  sectors: ['La Source Ã¢â€ â€™ Raidillon', 'Les Combes Ã¢â€ â€™ Fagnes', 'Stavelot Ã¢â€ â€™ Bus Stop'],
   corner: 'Eau Rouge',
   venue: 'Spa',
-  weather: { air: 18, track: 26, rain: 30, wind: 'NW 8 km/h', asphalt: 'DRY · COOLING' },
+  weather: { air: 18, track: 26, rain: 30, wind: 'NW 8 km/h', asphalt: 'DRY Ã‚Â· COOLING' },
   image: 'assets/spa-francorchamps-map.svg',
   alt: 'Spa-Francorchamps track layout with all 19 numbered turns, sectors, and DRS detection zones',
 };
@@ -252,7 +219,7 @@ const raceEventNames = {
   azerbaijan: 'AZERBAIJAN GRAND PRIX', bahrain: 'BAHRAIN GRAND PRIX', singapore: 'SINGAPORE GRAND PRIX',
   // 2026 special case: the Bahrain GP is being run at Sepang, Malaysia, after
   // the April Sakhir round was cancelled.
-  'united-states': 'UNITED STATES GRAND PRIX', mexico: 'MEXICO CITY GRAND PRIX', brazil: 'SÃO PAULO GRAND PRIX',
+  'united-states': 'UNITED STATES GRAND PRIX', mexico: 'MEXICO CITY GRAND PRIX', brazil: 'SÃƒÆ’O PAULO GRAND PRIX',
   'las-vegas': 'LAS VEGAS GRAND PRIX', qatar: 'QATAR GRAND PRIX',
   'united-arab-emirates': 'ABU DHABI GRAND PRIX',
   'live-spa': 'BELGIAN GRAND PRIX',
@@ -265,7 +232,7 @@ OFFICIAL_F1_CIRCUITS.forEach((circuit) => {
   circuitSelect.append(option);
 });
 
-function setMapCredit(label, url, detail, sourceLabel = 'Formula1.com · 2026') {
+function setMapCredit(label, url, detail, sourceLabel = 'Formula1.com Ã‚Â· 2026') {
   const credit = $('#mapCredit');
   credit.replaceChildren(document.createTextNode(`${label}: `));
   const link = document.createElement('a');
@@ -273,13 +240,14 @@ function setMapCredit(label, url, detail, sourceLabel = 'Formula1.com · 2026') 
   link.target = '_blank';
   link.rel = 'noreferrer';
   link.textContent = sourceLabel;
-  credit.append(link, document.createTextNode(` · ${detail}`));
+  credit.append(link, document.createTextNode(` Ã‚Â· ${detail}`));
 }
 
 // The lap badges in race control and the sector panel are written from here.
 function updateLapBadges() {
+  const badge = RACE_STATE.lapBadgeFor(raceState.lap);
   $$('[data-lap-badge]').forEach((node) => {
-    node.textContent = lap === 0 ? 'FORMATION' : `LAP ${lap}`;
+    node.textContent = badge;
   });
 }
 
@@ -288,47 +256,37 @@ function stintBars() {
 }
 
 // The strategy desk's stint bars: the first bar fills as the opening stint is
-// used, and the second one takes over once the stop is made.
+// used, and the second one takes over once the stop is made. All of the
+// arithmetic lives in RACE_STATE.stintShares() -- this only projects it.
 function updateStintVisuals() {
   const stints = stintBars();
   ['mara', 'eli'].forEach((key, index) => {
-    const plan = TYRE_PLANS[key];
     const bars = stints[index] ? stints[index].querySelectorAll('.stint-bar') : [];
     if (bars.length < 2) return;
     const [firstBar, secondBar] = bars;
-    const onSecond = pitPlanActive && stopCompleted;
-    // Plan B means no stop: the opening stint simply runs to the flag, so the
-    // first bar keeps growing rather than freezing at the old window.
-    const firstLength = pitPlanActive
-      ? (onSecond ? pitWindowStart : Math.min(lap, pitWindowStart))
-      : lap;
-    const secondLength = onSecond ? lap - pitWindowStart : 0;
-    const firstShare = Math.max(0, (firstLength / totalLaps) * 100);
-    const secondShare = Math.max(0, (secondLength / totalLaps) * 100);
-    firstBar.style.width = `${firstShare}%`;
-    secondBar.style.width = `${secondShare}%`;
+    const { onSecond, firstLength, secondLength, firstPercent, secondPercent } = RACE_STATE.stintShares(raceState);
+    firstBar.style.width = `${firstPercent}%`;
+    secondBar.style.width = `${secondPercent}%`;
     // Collapse a stint that has not started. A 0%-wide bar still renders its
     // 7px of horizontal padding, which reads as a stray colour block.
-    firstBar.classList.toggle('is-empty', firstShare === 0);
-    secondBar.classList.toggle('is-empty', secondShare === 0);
-    const laps = (n) => `${n} lap${n === 1 ? '' : 's'}`;
+    firstBar.classList.toggle('is-empty', firstPercent === 0);
+    secondBar.classList.toggle('is-empty', secondPercent === 0);
+    const laps = RACE_STATE.lapNoun;
     firstBar.querySelector('b').textContent = laps(firstLength);
     secondBar.querySelector('b').textContent = onSecond ? laps(secondLength) : 'planned';
     firstBar.classList.toggle('stint-active', !onSecond);
     secondBar.classList.toggle('stint-active', onSecond);
     // Plan B means no second compound: the opening tyre runs all the way.
-    const compound = onSecond ? plan.second : plan.first;
-    const chip = $(`[data-compound="${key}"]`);
-    if (chip) chip.textContent = plan.labels[compound];
     // The strategy dot and the driver card chip both follow the compound, so
     // the colour still says "soft" after the stop onto mediums.
+    const chip = $(`[data-compound="${key}"]`);
+    if (chip) chip.textContent = RACE_STATE.compoundLabel(raceState, key);
     const dot = $(`[data-compound-dot="${key}"]`);
-    if (dot) dot.className = `compound ${compound}-compound`;
+    if (dot) dot.className = `compound ${RACE_STATE.compoundClassName(raceState, key)}`;
     const card = $(`[data-driver="${key}"] .tyre-chip`);
     if (card) {
-      const code = { soft: 'SOFT', medium: 'MED', hard: 'HARD' }[compound];
-      card.className = `tyre-chip ${compound}`;
-      card.innerHTML = `<i></i> ${code}`;
+      card.className = RACE_STATE.tyreChipClassName(raceState, key);
+      card.innerHTML = `<i></i> ${RACE_STATE.chipCode(raceState, key)}`;
     }
   });
 }
@@ -336,19 +294,22 @@ function updateStintVisuals() {
 // Everything the desk shows about *where* we are: venue, lap count, lap pace,
 // sector names, weather, and the copy that used to hardcode Spa.
 function applyCircuitContext(circuit) {
-  activeCircuit = circuit;
-  totalLaps = circuit.laps;
-  lapSeconds = circuit.lapBase;
-  // A one-stop race: pit around 45% of the way through, then run to the flag.
-  pitWindowStart = Math.max(2, Math.round(circuit.laps * 0.45));
-  pitWindowEnd = Math.min(totalLaps, pitWindowStart + 2);
+  // Changing circuit restarts the race: the lap clock, the time cap and the
+  // chequered flag all belong to the circuit you are looking at.
+  //
+  // This is the only place the race is put back on the grid. reset() is called
+  // before anything reads raceState, so the ordering hazard that latched
+  // stopCompleted on a circuit switch can no longer be reached: there is no
+  // window in which an old elapsed time can be scored against the new circuit's
+  // lap pace, because the new lap pace is installed by the same call.
+  RACE_STATE.reset(raceState, circuit);
 
   const eventName = raceEventNames[circuit.slug] || `${circuit.shortName || circuit.name} GRAND PRIX`;
   const heroCorner = circuit.corner;
   $('#eventName').textContent = eventName;
   // The host nation, not the display name's prefix: the Bahrain Grand Prix
   // races in Malaysia, and Las Vegas is in the United States.
-  $('#raceVenue').textContent = circuit.country || circuit.name.split(' · ')[0];
+  $('#raceVenue').textContent = circuit.country || circuit.name.split(' Ã‚Â· ')[0];
   $('#raceDate').textContent = circuit.date;
   $('#heroDate').textContent = circuit.date;
   $('#heroCircuit').textContent = circuit.shortName || circuit.name;
@@ -364,21 +325,21 @@ function applyCircuitContext(circuit) {
       return word.charAt(0).toUpperCase() + word.slice(1);
     })
     .join(' ');
-  document.title = `Apex GP — ${documentTitle}`;
+  document.title = `Apex GP Ã¢â‚¬â€ ${documentTitle}`;
   const { air, track, rain, wind, asphalt } = circuit.weather;
   $('#weatherVenue').textContent = (circuit.venue || circuit.shortName || circuit.name).toUpperCase();
-  const icon = rain >= 45 ? '☂' : rain >= 20 ? '☁' : '☀';
+  const icon = rain >= 45 ? 'Ã¢Ëœâ€š' : rain >= 20 ? 'Ã¢ËœÂ' : 'Ã¢Ëœâ‚¬';
   $('#weatherIcon').textContent = icon;
   $('#weatherMiniIcon').textContent = icon;
-  $('#weatherAir').textContent = `${air}°`;
-  $('#weatherTrack').textContent = `${track}°`;
+  $('#weatherAir').textContent = `${air}Ã‚Â°`;
+  $('#weatherTrack').textContent = `${track}Ã‚Â°`;
   $('#weatherRain').textContent = `${rain}%`;
   $('#rainChance').textContent = `${rain}%`;
   $('#rainMeterFill').style.width = `${rain}%`;
   $('#weatherWind').textContent = wind;
   $('#weatherAsphalt').textContent = asphalt;
-  $('#weatherMini').textContent = `${air}°`;
-  $('#weatherMiniTrack').textContent = `${track}°`;
+  $('#weatherMini').textContent = `${air}Ã‚Â°`;
+  $('#weatherMiniTrack').textContent = `${track}Ã‚Â°`;
   $('#sector1Name').textContent = circuit.sectors[0];
   $('#sector2Name').textContent = circuit.sectors[1];
   $('#sector3Name').textContent = circuit.sectors[2];
@@ -388,7 +349,7 @@ function applyCircuitContext(circuit) {
   // be the faster of the two rows, and the "best in sector" footer must name
   // whoever actually holds it. Spa's split gives Voss S1 and S3, Navarro S2,
   // by margins of 0.166 / 0.106 / 0.303 against the session's 0.363 pace gap.
-  const splits = sectorSplitsFor(circuit.lapBase);
+  const splits = RACE_STATE.sectorSplitsFor(circuit.lapBase);
   const sectorWinners = ['mara', 'eli', 'mara'];
   const winnerMargins = [0.166, 0.106, 0.303];
   const sectorRows = $$('.sector-driver');
@@ -414,7 +375,7 @@ function applyCircuitContext(circuit) {
   sectorWinners.forEach((winner, index) => {
     const cell = bestInSector[index + 1];
     if (!cell) return;
-    cell.innerHTML = `${winner === 'mara' ? 'VOSS' : 'NAVARRO'} <i>−${winnerMargins[index].toFixed(3)}</i>`;
+    cell.innerHTML = `${winner === 'mara' ? 'VOSS' : 'NAVARRO'} <i>Ã¢Ë†â€™${winnerMargins[index].toFixed(3)}</i>`;
   });
 
   // LAST LAP is the current reference pace; BEST is a little quicker, as it
@@ -422,8 +383,8 @@ function applyCircuitContext(circuit) {
   const driverLaps = { mara: circuit.lapBase, eli: circuit.lapBase + TEAM_PACE_GAP };
   const bestBonus = { mara: 0.326, eli: 0.820 };
   Object.entries(driverLaps).forEach(([key, seconds]) => {
-    $$(`[data-lap="${key}"]`).forEach((node) => { node.textContent = formatLapTime(seconds); });
-    $$(`[data-best="${key}"]`).forEach((node) => { node.textContent = formatLapTime(seconds - bestBonus[key]); });
+    $$(`[data-lap="${key}"]`).forEach((node) => { node.textContent = RACE_STATE.formatLapTime(seconds); });
+    $$(`[data-best="${key}"]`).forEach((node) => { node.textContent = RACE_STATE.formatLapTime(seconds - bestBonus[key]); });
   });
 
   fieldCars.forEach((driver) => {
@@ -433,23 +394,20 @@ function applyCircuitContext(circuit) {
 
   // Changing circuit restarts the race: the lap clock, the time cap and the
   // chequered flag all belong to the circuit you are looking at.
-  elapsedSeconds = 0;
-  // lastFrameTime is deliberately left alone: zeroing it would make the next
-  // frame's delta enormous or negative, depending on the clock's origin.
-  lastDisplayedSecond = -1;
-  raceFinished = false;
-  stopCompleted = false;
-  lap = START_LAP;
+  //
+  // The ordering hazard that used to sit here is gone. updateRaceReadouts()
+  // reads only raceState, and raceState was rebuilt by RACE_STATE.reset() at
+  // the top of this function, so there is no earlier state left for it to
+  // score against the new lap pace even if the calls below are rearranged.
   $('#advanceLap').disabled = false;
-  $('#advanceLap').textContent = 'ADVANCE LAP ＋';
+  $('#advanceLap').textContent = 'ADVANCE LAP Ã¯Â¼â€¹';
   $('.status-pill').innerHTML = '<b></b> GREEN FLAG';
   $('.status-pill').style.color = '';
   $('.status-pill b').style.background = '';
-  $('#simulationLabel').textContent = circuit.slug === 'live-spa' ? '20 CARS MOVING' : '20 CARS · TRACK SYNC';
+  $('#simulationLabel').textContent = circuit.slug === 'live-spa' ? '20 CARS MOVING' : '20 CARS Ã‚Â· TRACK SYNC';
   $('#simulationState').classList.remove('sim-preview');
   // renderPitPlan() calls updateRaceReadouts(), so it has to run after the
-  // reset above. Running it earlier would score the old elapsed time against
-  // the new circuit's lap pace and latch stopCompleted on.
+  // reset above.
   renderPitPlan();
   updateRaceReadouts();
   // Last, so it reads the reset state rather than the previous circuit's.
@@ -458,12 +416,13 @@ function applyCircuitContext(circuit) {
 }
 
 function updateSectorInsight() {
-  if (!activeCircuit) return;
-  const finale = activeCircuit.sectors[2].split('→').pop().trim();
+  const circuit = raceState.circuit;
+  if (!circuit) return;
+  const finale = circuit.sectors[2].split('Ã¢â€ â€™').pop().trim();
   const who = 'Voss';
-  $('#sectorInsight').innerHTML = lap === 0
-    ? `<b>No laps run yet.</b> Sector data lands after the first flying lap at ${activeCircuit.venue}.`
-    : stopCompleted
+  $('#sectorInsight').innerHTML = raceState.lap === 0
+    ? `<b>No laps run yet.</b> Sector data lands after the first flying lap at ${circuit.venue}.`
+    : raceState.stopCompleted
       ? `<b>${who} is quicker into ${finale}.</b> Fresh rubber, so the run to the flag should be where it is won.`
       : `<b>${who} is quicker into ${finale}.</b> The opening tyres are still fresh. Conserve them.`;
 }
@@ -487,13 +446,13 @@ function showCircuitMap(slug = 'live-spa') {
     applyCircuitContext(liveSpaMap);
     $('#circuitName').textContent = liveSpaMap.shortName;
     $('#circuitLength').textContent = liveSpaMap.length;
-    $('#mapEyebrow').textContent = 'LIVE RACE MAP · SPA-FRANCORCHAMPS';
+    $('#mapEyebrow').textContent = 'LIVE RACE MAP Ã‚Â· SPA-FRANCORCHAMPS';
     movingLegend.forEach((item) => { item.hidden = false; });
     $('#mapFooter').hidden = false;
     $('#cornerLine').hidden = false;
-    $('#turnReadout').innerHTML = '<span class="turn-readout-icon">⌖</span><span><b>Pick a corner</b><small>Tap a turn marker for the engineer\'s note.</small></span><span class="map-north">N ↑</span>';
-    $('#mapReset').innerHTML = 'RESET VIEW <span>↺</span>';
-    setMapCredit('Map', 'https://commons.wikimedia.org/wiki/File:2022_F1_CourseLayout_Belgium.svg', 'ごひょううべこ · CC BY-SA 4.0', '2022 F1 CourseLayout · Wikimedia Commons');
+    $('#turnReadout').innerHTML = '<span class="turn-readout-icon">Ã¢Å’â€“</span><span><b>Pick a corner</b><small>Tap a turn marker for the engineer\'s note.</small></span><span class="map-north">N Ã¢â€ â€˜</span>';
+    $('#mapReset').innerHTML = 'RESET VIEW <span>Ã¢â€ Âº</span>';
+    setMapCredit('Map', 'https://commons.wikimedia.org/wiki/File:2022_F1_CourseLayout_Belgium.svg', 'Ã£Ââ€Ã£ÂÂ²Ã£â€šâ€¡Ã£Ââ€ Ã£Ââ€ Ã£ÂÂ¹Ã£Ââ€œ Ã‚Â· CC BY-SA 4.0', '2022 F1 CourseLayout Ã‚Â· Wikimedia Commons');
     return;
   }
 
@@ -509,14 +468,14 @@ function showCircuitMap(slug = 'live-spa') {
   trackOverlay.hidden = false;
   currentRoute = motionRoute;
   applyCircuitContext(circuit);
-  $('#circuitName').textContent = circuit.name.split(' · ').slice(1).join(' · ');
+  $('#circuitName').textContent = circuit.name.split(' Ã‚Â· ').slice(1).join(' Ã‚Â· ');
   $('#circuitLength').textContent = circuit.length;
-  $('#mapEyebrow').textContent = 'OFFICIAL F1 CIRCUIT MAP · 2026';
+  $('#mapEyebrow').textContent = 'OFFICIAL F1 CIRCUIT MAP Ã‚Â· 2026';
   movingLegend.forEach((item) => { item.hidden = false; });
   $('#mapFooter').hidden = true;
   $('#cornerLine').hidden = true;
-  $('#turnReadout').innerHTML = `<span class="turn-readout-icon">⌖</span><span><b>${circuit.name} · ${circuit.laps} laps</b><small>Twenty cars follow this official layout's mapped racing line as the field runs.</small></span><a class="map-source-link" href="${circuit.eventUrl}" target="_blank" rel="noreferrer">SOURCE ↗</a>`;
-  $('#mapReset').innerHTML = 'BACK TO LIVE SPA <span>↶</span>';
+  $('#turnReadout').innerHTML = `<span class="turn-readout-icon">Ã¢Å’â€“</span><span><b>${circuit.name} Ã‚Â· ${circuit.laps} laps</b><small>Twenty cars follow this official layout's mapped racing line as the field runs.</small></span><a class="map-source-link" href="${circuit.eventUrl}" target="_blank" rel="noreferrer">SOURCE Ã¢â€ â€”</a>`;
+  $('#mapReset').innerHTML = 'BACK TO LIVE SPA <span>Ã¢â€ Â¶</span>';
   setMapCredit('Official map', circuit.eventUrl, 'track diagram served by Formula1.com; markings kept as published');
 }
 
@@ -539,60 +498,39 @@ $('#realTrackMap').addEventListener('error', () => {
 
 circuitSelect.addEventListener('change', () => showCircuitMap(circuitSelect.value));
 
-function updateRaceReadouts() {
-  const previousLap = lap;
-  // Race distance covered, 0 at the grid and totalLaps at the flag. The
-  // epsilon guards the same float drift when the animation loop accumulates.
-  lap = Math.min(totalLaps, Math.floor(elapsedSeconds / lapSeconds + 1e-9));
-  // The stop happens on the pit window's opening lap; tyre age resets there.
-  if (pitPlanActive && !stopCompleted && lap >= pitWindowStart) {
-    stopCompleted = true;
-    showToast(`${pitWindowStart >= totalLaps - 2 ? 'Late' : 'Planned'} stop. Fresh rubber from here.`);
-  }
-  const onStintTwo = pitPlanActive && stopCompleted;
-  maraAge = onStintTwo ? lap - pitWindowStart : lap;
-  eliAge = onStintTwo ? lap - pitWindowStart : lap;
-  $('#lapReadout').textContent = `LAP ${lap} / ${totalLaps}`;
-  $('#progressFill').style.width = `${(lap / totalLaps) * 100}%`;
+// Projects raceState onto the desk. Every number here is read from the engine,
+// so this function makes no decisions of its own.
+function updateRaceReadouts(change) {
+  const previousLap = change ? change.previousLap : raceState.lap;
+  $('#lapReadout').textContent = RACE_STATE.lapLabel(raceState);
+  $('#progressFill').style.width = `${RACE_STATE.progressPercent(raceState)}%`;
   updateLapBadges();
-  $('#maraAge').textContent = `${maraAge} LAP${maraAge === 1 ? '' : 'S'}`;
-  $('#eliAge').textContent = `${eliAge} LAP${eliAge === 1 ? '' : 'S'}`;
+  $('#maraAge').textContent = RACE_STATE.tyreAgeLabel(raceState.maraAge);
+  $('#eliAge').textContent = RACE_STATE.tyreAgeLabel(raceState.eliAge);
   // Two swappable pieces rather than an innerHTML rewrite: rebuilding the
   // note on every tick would recreate the #stopCountdown node each time.
   const lead = $('#stopLead');
   const countdown = $('#stopCountdown');
   if (lead && countdown) {
-    lead.textContent = stopCompleted ? 'Boxed on lap' : 'Next stop on lap';
-    countdown.textContent = String(pitWindowStart);
+    lead.textContent = raceState.stopCompleted ? 'Boxed on lap' : 'Next stop on lap';
+    countdown.textContent = String(raceState.pitWindowStart);
   }
   updateStintVisuals();
-  // The cap is the full race distance, so the countdown and the lap counter
-  // reach zero together on every circuit. Previously this was a fixed 40:00,
-  // which expired 8 laps early at Spa and far earlier at Monaco.
-  const raceSeconds = totalLaps * lapSeconds;
-  const timeLeft = Math.max(0, raceSeconds - elapsedSeconds);
-  lastDisplayedSecond = Math.floor(elapsedSeconds);
-  const capLabel = `${Math.floor(raceSeconds / 60)}:${String(Math.floor(raceSeconds % 60)).padStart(2, '0')}`;
-  const finished = lap >= totalLaps;
-  // Never show more than the cap: a rounding overshoot would read 78:39 on a
-  // 78:38 race.
-  const safeLeft = finished ? 0 : Math.min(timeLeft, raceSeconds);
-  const safeMinutes = Math.floor(safeLeft / 60);
-  const safeSeconds = Math.floor(safeLeft % 60);
-  $('#raceClock').textContent = finished
-    ? `${capLabel} RACE COMPLETE`
-    : `${String(safeMinutes).padStart(2, '0')}:${String(safeSeconds).padStart(2, '0')} TO ${capLabel} CAP`;
-  if (lap > previousLap) {
-    const phase = stopCompleted ? 'Second stint' : 'Opening tyres';
-    showToast(`Lap ${lap} of ${totalLaps}. ${phase}.`);
+  $('#raceClock').textContent = RACE_STATE.clockLabel(raceState);
+  if (change && change.stoppedNow) {
+    const late = raceState.pitWindowStart >= raceState.totalLaps - 2;
+    showToast(`${late ? 'Late' : 'Planned'} stop. Fresh rubber from here.`);
+  }
+  if (change && change.lap > previousLap) {
+    const phase = raceState.stopCompleted ? 'Second stint' : 'Opening tyres';
+    showToast(`Lap ${change.lap} of ${raceState.totalLaps}. ${phase}.`);
   }
   // The chart window and the sector insight both depend on how far we've run.
-  if (lap !== previousLap) {
+  if (change && change.lapChanged) {
     drawChart(chartMode);
     updateSectorInsight();
   }
-  if (lap >= totalLaps) {
-    raceFinished = true;
+  if (change && change.finished) {
     $('.status-pill').innerHTML = '<b></b> CHEQUERED FLAG';
     $('.status-pill').style.color = 'var(--paper)';
     $('.status-pill b').style.background = 'var(--paper)';
@@ -604,26 +542,11 @@ function updateRaceReadouts() {
 }
 
 $('#advanceLap').addEventListener('click', () => {
-  if (!raceFinished && lap < totalLaps) {
-    // Snap to the exact lap boundary rather than adding lapSeconds. Repeated
-    // float addition drifts: at Melbourne's 80.1s lap, 58 additions land on
-    // 57.9999 and the counter never reaches the flag.
-    elapsedSeconds = (lap + 1) * lapSeconds;
-    updateRaceReadouts();
-  }
+  updateRaceReadouts(RACE_STATE.advanceLap(raceState));
 });
 
 function animateRace(timestamp) {
-  if (!lastFrameTime) lastFrameTime = timestamp;
-  // Cap the step so a backgrounded tab does not fast-forward the race, and
-  // clamp at zero so a timestamp reset can never drive the lap counter
-  // negative.
-  const delta = Math.max(0, Math.min((timestamp - lastFrameTime) / 1000, 0.1));
-  lastFrameTime = timestamp;
-  if (!raceFinished) {
-    elapsedSeconds = Math.max(0, elapsedSeconds + delta);
-    if (Math.floor(elapsedSeconds) !== lastDisplayedSecond) updateRaceReadouts();
-  }
+  updateRaceReadouts(RACE_STATE.tickFrame(raceState, timestamp));
   requestAnimationFrame(animateRace);
 }
 
@@ -632,7 +555,7 @@ $$('.turn').forEach((turn) => {
     $$('.turn.selected').forEach((node) => node.classList.remove('selected'));
     turn.classList.add('selected');
     const [name, note] = turnNotes[turn.dataset.turn] || [`Turn ${turn.dataset.turn}`, 'Corner note pending. The map says corner; the pit wall agrees.'];
-    $('#turnReadout').innerHTML = `<span class="turn-readout-icon">⌖</span><span><b>Turn ${turn.dataset.turn} · ${name}</b><small>${note}</small></span><span class="map-north">N ↑</span>`;
+    $('#turnReadout').innerHTML = `<span class="turn-readout-icon">Ã¢Å’â€“</span><span><b>Turn ${turn.dataset.turn} Ã‚Â· ${name}</b><small>${note}</small></span><span class="map-north">N Ã¢â€ â€˜</span>`;
   };
   turn.addEventListener('click', activate);
   turn.addEventListener('keydown', (event) => {
@@ -650,59 +573,31 @@ $$('.driver-card').forEach((card) => card.addEventListener('click', () => {
 
 // The chart plots an abstract "cost" scale rather than real seconds, so the
 // shape of the data survives a circuit change even though the absolute
-// lap-time numbers in the driver cards do not.
-// Chart series are generated for whichever laps have actually been run, so the
-// x-axis always shows the window the race has covered so far. `a` is Voss, `b`
-// is Navarro; values are an abstract cost scale, not seconds.
-const CHART_WINDOW = 10;
-const PACE_SHAPE = [66, 59, 62, 45, 50, 37, 43, 27, 32, 21, 34, 26];
-const NARRRO_SHAPE = [78, 73, 70, 77, 57, 61, 53, 55, 37, 42, 47, 39];
-const POSITION_SHAPE = [25, 25, 42, 42, 42, 42, 42, 42, 42, 42, 40, 42];
-const NAVARRO_POSITION_SHAPE = [58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 56, 58];
-
-// The laps actually completed, most recent last. Empty on the grid: the chart
-// must not invent points for laps that have not been run.
-function chartWindow(run) {
-  const end = Math.max(0, run);
-  const start = Math.max(1, end - CHART_WINDOW + 1);
-  return Array.from({ length: end - start + 1 }, (unused, i) => start + i);
-}
-
-function sliceShape(shape, labels) {
-  return labels.map((lapNumber) => shape[(lapNumber - 1) % shape.length]);
-}
-
-function lapNoun(count) {
-  return `${count} lap${count === 1 ? '' : 's'}`;
-}
-
+// lap-time numbers in the driver cards do not. Which laps to plot and what
+// their values are both decided in race-state.js; this only assembles the
+// markup. `a` is Voss, `b` is Navarro.
 function chartDataFor() {
-  const paceLaps = chartWindow(lap);
-  const positionLaps = chartWindow(lap);
-  const paceLabels = paceLaps.map(String);
-  const positionLabels = positionLaps.map(String);
-  const noData = paceLaps.length === 0;
+  const pace = RACE_STATE.chartSeries('pace', raceState);
+  const position = RACE_STATE.chartSeries('position', raceState);
+  const sector = RACE_STATE.chartSeries('sector', raceState);
+  const reference = RACE_STATE.formatLapTime(raceState.circuit.lapBase);
   return {
     pace: {
-      title: noData ? 'Lap time · no laps yet' : `Lap time · last ${lapNoun(paceLaps.length)}`,
-      stat: () => (noData
-        ? `<b>${formatLapTime(activeCircuit.lapBase)}</b> <i>reference pace</i>`
-        : `<b>${formatLapTime(activeCircuit.lapBase)}</b> <i>−0.4s vs. field</i>`),
-      labels: paceLabels,
-      a: sliceShape(PACE_SHAPE, paceLaps),
-      b: sliceShape(NARRRO_SHAPE, paceLaps),
+      title: RACE_STATE.chartTitleFor('pace', raceState),
+      stat: () => (RACE_STATE.chartIsEmpty('pace', raceState)
+        ? `<b>${reference}</b> <i>reference pace</i>`
+        : `<b>${reference}</b> <i>Ã¢Ë†â€™0.4s vs. field</i>`),
+      ...pace,
     },
     position: {
-      title: noData ? 'Race position · on the grid' : `Race position · last ${lapNoun(positionLaps.length)}`,
+      title: RACE_STATE.chartTitleFor('position', raceState),
       stat: () => '<b>P4 / P7</b> <i>both holding</i>',
-      labels: positionLabels,
-      a: sliceShape(POSITION_SHAPE, positionLaps),
-      b: sliceShape(NAVARRO_POSITION_SHAPE, positionLaps),
+      ...position,
     },
     sector: {
-      title: noData ? 'Sector pace · no laps yet' : `Sector pace · lap ${lap}`,
-      stat: () => '<b>−0.575s</b> <i>team delta</i>',
-      labels: ['S1', 'S2', 'S3'], a: [55, 49, 31], b: [61, 44, 60],
+      title: RACE_STATE.chartTitleFor('sector', raceState),
+      stat: () => '<b>Ã¢Ë†â€™0.575s</b> <i>team delta</i>',
+      ...sector,
     },
   };
 }
@@ -748,26 +643,23 @@ $('#incidentToggle').addEventListener('click', () => {
 
 function renderPitPlan() {
   const button = $('#pitPlan');
-  button.textContent = pitPlanActive ? '✓' : '×';
-  button.classList.toggle('unplanned', !pitPlanActive);
-  $('.plan-badge').textContent = pitPlanActive ? 'PLAN A' : 'PLAN B?';
-  $('#pitWindow').textContent = pitPlanActive
-    ? `Box window: laps ${pitWindowStart}–${pitWindowEnd}`
-    : 'Running the opening tyre to the flag';
+  button.textContent = raceState.pitPlanActive ? 'Ã¢Å“â€œ' : 'Ãƒâ€”';
+  button.classList.toggle('unplanned', !raceState.pitPlanActive);
+  $('.plan-badge').textContent = raceState.pitPlanActive ? 'PLAN A' : 'PLAN B?';
+  $('#pitWindow').textContent = RACE_STATE.pitWindowLabel(raceState);
   // Plan A and Plan B are two separate elements, toggled with `hidden`, so
   // neither can destroy the node the other depends on.
-  $('.plan-a-note').hidden = !pitPlanActive;
-  $('.plan-b-note').hidden = pitPlanActive;
+  $('.plan-a-note').hidden = RACE_STATE.planNoteHidden(raceState, 'a');
+  $('.plan-b-note').hidden = RACE_STATE.planNoteHidden(raceState, 'b');
   // Plan B means no stop: the opening stint runs to the flag, so the flag
   // clears and the window reopens.
-  if (!pitPlanActive) stopCompleted = false;
-  updateRaceReadouts();
+  updateRaceReadouts(RACE_STATE.sync(raceState));
 }
 
 $('#pitPlan').addEventListener('click', () => {
-  pitPlanActive = !pitPlanActive;
+  RACE_STATE.setPitPlanActive(raceState, !raceState.pitPlanActive);
   renderPitPlan();
-  showToast(pitPlanActive ? 'Pit window restored. The pit wall breathes again.' : 'Plan changed. Someone has opened three spreadsheets.');
+  showToast(raceState.pitPlanActive ? 'Pit window restored. The pit wall breathes again.' : 'Plan changed. Someone has opened three spreadsheets.');
 });
 
 $('#mapReset').addEventListener('click', () => {
@@ -777,14 +669,14 @@ $('#mapReset').addEventListener('click', () => {
     return;
   }
   $$('.turn.selected').forEach((node) => node.classList.remove('selected'));
-  $('#turnReadout').innerHTML = '<span class="turn-readout-icon">⌖</span><span><b>Pick a corner</b><small>Tap a turn marker for the engineer\'s note.</small></span><span class="map-north">N ↑</span>';
+  $('#turnReadout').innerHTML = '<span class="turn-readout-icon">Ã¢Å’â€“</span><span><b>Pick a corner</b><small>Tap a turn marker for the engineer\'s note.</small></span><span class="map-north">N Ã¢â€ â€˜</span>';
   $$('.team-car-dot').forEach((marker) => { marker.style.opacity = '1'; });
   showToast('Map reset. Spa remains stubbornly the same shape.');
 });
 
 $('#soundToggle').setAttribute('aria-label', 'Toggle focus mode');
 $('#soundToggle').title = 'Toggle focus mode';
-$('#soundToggle').textContent = '◎';
+$('#soundToggle').textContent = 'Ã¢â€”Å½';
 $('#soundToggle').addEventListener('click', (event) => {
   document.body.classList.toggle('focus-mode');
   const active = document.body.classList.contains('focus-mode');

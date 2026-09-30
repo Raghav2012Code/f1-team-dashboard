@@ -119,6 +119,7 @@ for (const rec of records) {
 // 6. Every compound class the JS writes must have a matching CSS colour rule,
 // or the dot/chip silently renders in the wrong colour after a pit stop.
 const css = read('styles.css');
+const engine = read('race-state.js');
 for (const compound of ['soft', 'medium', 'hard']) {
   if (!new RegExp(`\\.${compound}-compound\\{[^}]*color:`).test(css)) {
     note(`script.js can set "${compound}-compound" but styles.css has no colour rule for it`);
@@ -129,7 +130,9 @@ for (const compound of ['soft', 'medium', 'hard']) {
 }
 
 // 7. Compounds used in a TYRE_PLANS entry must be one the stylesheet knows.
-const planBlock = (script.match(/const TYRE_PLANS = \{[\s\S]*?\n\};/) || [])[0] || '';
+// The plans moved to race-state.js, so this has to read them from there or it
+// quietly stops checking anything.
+const planBlock = (engine.match(/const TYRE_PLANS = \{[\s\S]*?\n\};/) || [])[0] || '';
 for (const m of planBlock.matchAll(/\b(first|second):\s*'(\w+)'/g)) {
   if (!new RegExp(`\\.${m[2]}-compound\\{`).test(css)) {
     note(`TYRE_PLANS uses compound "${m[2]}" which styles.css does not define`);
@@ -143,6 +146,43 @@ for (const sel of ['weather-title']) {
   const rule = (css.match(new RegExp(`\\.${sel}\\{[^}]*\\}`)) || [])[0] || '';
   if (/display:flex/.test(rule) && new RegExp(`\\.${sel} span\\{`).test(css)) {
     note(`.${sel} is a flex container and has a descendant .${sel} span rule; use a class so a new wrapper does not change the child count`);
+  }
+}
+
+// 9. The race model's fields may only be written inside race-state.js. This is
+// the invariant that issue #7 asked for: a circuit switch used to score the
+// previous circuit's elapsed time against the new lap pace because the reset
+// order was only documented in a comment. Reads through `raceState.foo` are
+// fine; what must not reappear is a bare assignment to one of these names.
+const RACE_FIELDS = ['elapsed', 'lap', 'stopCompleted', 'raceFinished', 'maraAge', 'eliAge', 'pitWindowStart', 'pitWindowEnd', 'lapSeconds', 'totalLaps', 'lastFrameTime', 'lastDisplayedSecond'];
+const blame = (index, field, via) => {
+  const line = script.slice(0, index).split('\n').length;
+  const text = script.split('\n')[line - 1].trim();
+  if (text.startsWith('//')) return;
+  note(`script.js:${line} writes race field "${field}"${via}; only race-state.js may, via reset/advanceLap/tick/sync`);
+};
+
+// (a) Any write through raceState.<field>. This is the case that matters most:
+// reaching into the state object is exactly how the old ordering hazard came
+// back. Reads are fine, so only an assignment operator counts.
+const viaState = new RegExp(`raceState\\.(${RACE_FIELDS.join('|')})\\s*(?:\\+\\+|--|(?:[-+*/]|%)?=)(?!=)`, 'g');
+for (const m of script.matchAll(viaState)) blame(m.index, m[1], ' via raceState');
+
+// (b) A bare assignment to one of the old module-level names. The leading class
+// excludes `.`, quotes and `-`, so `driver.lapSeconds` and `[data-lap="mara"]`
+// are not caught; only a standalone name being written is.
+for (const field of RACE_FIELDS) {
+  const bare = new RegExp(`(^|[^.\\w$"'\`\\-])${field}\\s*(?:\\+\\+|--|(?:[-+*/]|%)?=)(?!=)`, 'gm');
+  for (const m of script.matchAll(bare)) blame(m.index + m[1].length, field, '');
+}
+
+// 10. Every engine entry point script.js calls must actually be exported.
+// The export list is the last `return {` in the file; earlier ones are plain
+// object literals returned by create() and pitWindowFor().
+const exportBlock = engine.slice(engine.lastIndexOf('return {'));
+for (const m of script.matchAll(/RACE_STATE\.(\w+)\(/g)) {
+  if (!new RegExp(`^\\s*${m[1]},?$`, 'm').test(exportBlock)) {
+    note(`script.js calls RACE_STATE.${m[1]}() but race-state.js does not export it`);
   }
 }
 

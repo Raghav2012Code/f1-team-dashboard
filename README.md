@@ -82,15 +82,28 @@ Switching circuits swaps the path's `d` attribute and the overlay's `viewBox` to
 ```
 index.html                     Markup, panel structure, the Spa turn markers
 styles.css                     The entire theme and layout (shipped minified)
-script.js                      Race clock, map animation, charts, all interactions
+race-state.js                  The race model: pure arithmetic, no DOM, no timers
+script.js                      Rendering and interaction; owns no race state
 circuits-data.js               23 circuits: name, length, laps, map URL, event URL
 circuit-routes.js              Traced racing-line paths, keyed by circuit slug
 assets/spa-francorchamps-map.svg   Bundled Spa layout, 19 turns + sector markings
+test/race-state.test.cjs       20 tests over the race model, stock node
 tools-lint.cjs                 Markup, data and CSS consistency checks
 verify-calendar.cjs            Checks circuits-data.js against the 2026 calendar
 ```
 
-The two data files are plain globals — `OFFICIAL_F1_CIRCUITS` and `OFFICIAL_CIRCUIT_ROUTES` — read directly by `script.js`. Adding a circuit means adding an entry to both, keyed by the same slug.
+The data files are plain globals — `OFFICIAL_F1_CIRCUITS`, `OFFICIAL_CIRCUIT_ROUTES` and `RACE_STATE` — read directly by `script.js`. Adding a circuit means adding an entry to both circuit files, keyed by the same slug.
+
+### Where the race state lives
+
+All of it is in **one object**, `raceState`, and the arithmetic that maintains it is in `race-state.js`. `script.js` only reads it and writes it to the DOM.
+
+Two rules, both enforced rather than documented:
+
+- **`RACE_STATE.reset(state, circuit)` is the only thing that puts the race back on the grid.** It is called at the top of `applyCircuitContext`, before anything reads the state, so there is no window in which one circuit's elapsed time can be scored against another circuit's lap pace. That ordering used to be a comment, and the bug it described — the pit stop latching as already-made — shipped anyway.
+- **Nothing outside `race-state.js` may assign a race field.** `tools-lint.cjs` fails if `script.js` writes to `raceState.lap`, `raceState.stopCompleted` and friends, or re-declares them as loose variables.
+
+Because `race-state.js` has no DOM and no timers, the whole 24-circuit race sweep runs headlessly in Node in milliseconds — which is what `test/race-state.test.cjs` does.
 
 ### What is real and what is invented
 
@@ -173,18 +186,46 @@ Small, focused pull requests are welcome — a corner note, a new circuit, a bug
 Run the checks before you push:
 
 ```bash
+node --test               # 20 tests over the race model
 node tools-lint.cjs        # markup, data and CSS consistency
 node verify-calendar.cjs   # circuits-data.js against the published 2026 calendar
 ```
 
-Neither is a style linter. Together they catch the things that have actually broken this project:
+None of these is a style linter, and none of them needs an install step: there is no `package.json`, and they run on stock node.
+
+### Tests
+
+`node --test` covers the race model only, and that is on purpose. `race-state.js` is pure, so the tests need no browser and no DOM shim — the full 24-circuit sweep, including every lap from the grid to the chequered flag, finishes in milliseconds.
+
+Every test is named after a bug that actually shipped. The full list of eight came from failures caught by hand-written browser scripts that were then thrown away, so the assertions live in the suite now:
+
+| Test | What it prevents |
+| --- | --- |
+| repeated float addition cannot lose the final lap | `elapsed += lapSeconds` drifting, so Melbourne could never reach the flag |
+| the lap counter cannot go negative | a frame-timestamp reset reading `LAP -1` |
+| a backgrounded tab cannot fast-forward the race | one huge frame delta skipping laps |
+| the clock never shows more than the cap | `78:39` on a 78:38 race |
+| a circuit switch resets the race completely | the pit stop latching as already-made |
+| the chart plots only laps actually run | two invented points on the grid |
+| chart titles reflect the window | "last 2 laps" when one had been run |
+| stint bars never go negative or past 100% | a bar overflowing its track |
+
+Two of them assert their own preconditions — the float-drift test proves the naive sum really does lose the final lap for that circuit before trusting the epsilon, and the circuit-switch test proves the leaked elapsed time really would have passed the next circuit's flag. If the data changes and a precondition stops holding, the test fails loudly instead of quietly passing.
+
+A note on writing tests here: drive the race through `runTo` / `runToLap`, which are iteration-bounded. An unbounded `while (state.lap < circuit.laps)` hangs the whole run if the flag becomes unreachable — which is exactly the bug several of these tests exist to catch, so a hang hides the failure it was written to surface.
+
+### Static checks
+
+`tools-lint.cjs` and `verify-calendar.cjs` catch the things that have actually broken this project:
 
 - **`$('#some-id')` in `script.js` with no matching id in `index.html`.** Renaming an id in the markup silently breaks the code that writes to it.
 - **A function that is declared but never called.** This is what an edit that swallows the tail of a function looks like: `node --check` passes, because the orphaned code is still valid JavaScript, it just references variables that are no longer in scope.
-- **A compound class the stylesheet does not define.** `script.js` rewrites `hard-compound` on the strategy dot at the pit stop; without a matching rule the dot keeps the previous colour and the label stops matching the swatch.
+- **A compound class the stylesheet does not define.** The strategy dot gets `hard-compound` at the pit stop; without a matching rule the dot keeps the previous colour and the label stops matching the swatch.
+- **An assignment to a race field in `script.js`.** Reading `raceState.lap` is fine; writing it, or reintroducing a loose `lap`, fails the build. See "Where the race state lives" above.
+- **A call to `RACE_STATE.something()` that the engine does not export**, which is the typo that would otherwise only show up as `undefined is not a function` in the browser.
 - **Slug drift** between `circuits-data.js` and `circuit-routes.js`, and duplicate ids in the markup.
 - **Implausible circuit data** — a track temperature below the air temperature, a lap count outside the real 2026 range, a pit window that leaves no second stint.
-- **A date that names the wrong weekday.** `tools-lint.cjs` recomputes the day of the week and compares it to the copy, which is how "Sunday, 26 September" got caught when Azerbaijan 2026 is a Saturday.
+- **A date that names the wrong weekday.** The weekday is recomputed and compared to the copy, which is how "Sunday, 26 September" got caught when Azerbaijan 2026 is a Saturday.
 
 A few things worth knowing before you edit:
 
