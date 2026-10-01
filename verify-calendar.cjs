@@ -78,7 +78,7 @@ OFFICIAL.forEach(([round, gp, circuit, km, laps, iso], i) => {
   if (rec.date !== longDate) {
     problems.push(`round ${round} ${rec.slug}: date is "${rec.date}", official is "${longDate}" (${iso}, a ${weekday})`);
   }
-  if (Math.abs(rec.length - km) > 0.0015) {
+  if (Math.abs(parseFloat(rec.length) - km) > 0.0015) {
     problems.push(`round ${round} ${rec.slug}: length ${rec.length} vs official ${km}km`);
   }
   if (rec.laps !== laps) {
