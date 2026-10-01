@@ -400,7 +400,7 @@ function applyCircuitContext(circuit) {
   // the top of this function, so there is no earlier state left for it to
   // score against the new lap pace even if the calls below are rearranged.
   $('#advanceLap').disabled = false;
-  $('#advanceLap').textContent = 'ADVANCE LAP ＋';
+  $('#advanceLap').innerHTML = 'ADVANCE LAP <span>＋</span>';
   $('.status-pill').innerHTML = '<b></b> GREEN FLAG';
   $('.status-pill').style.color = '';
   $('.status-pill b').style.background = '';
@@ -501,6 +501,7 @@ circuitSelect.addEventListener('change', () => showCircuitMap(circuitSelect.valu
 // Projects raceState onto the desk. Every number here is read from the engine,
 // so this function makes no decisions of its own.
 function updateRaceReadouts(change) {
+  if (change === null) return;
   const previousLap = change ? change.previousLap : raceState.lap;
   $('#lapReadout').textContent = RACE_STATE.lapLabel(raceState);
   $('#progressFill').style.width = `${RACE_STATE.progressPercent(raceState)}%`;
@@ -517,19 +518,6 @@ function updateRaceReadouts(change) {
   }
   updateStintVisuals();
   $('#raceClock').textContent = RACE_STATE.clockLabel(raceState);
-  if (change && change.stoppedNow) {
-    const late = raceState.pitWindowStart >= raceState.totalLaps - 2;
-    showToast(`${late ? 'Late' : 'Planned'} stop. Fresh rubber from here.`);
-  }
-  if (change && change.lap > previousLap) {
-    const phase = raceState.stopCompleted ? 'Second stint' : 'Opening tyres';
-    showToast(`Lap ${change.lap} of ${raceState.totalLaps}. ${phase}.`);
-  }
-  // The chart window and the sector insight both depend on how far we've run.
-  if (change && change.lapChanged) {
-    drawChart(chartMode);
-    updateSectorInsight();
-  }
   if (change && change.finished) {
     $('.status-pill').innerHTML = '<b></b> CHEQUERED FLAG';
     $('.status-pill').style.color = 'var(--paper)';
@@ -538,6 +526,17 @@ function updateRaceReadouts(change) {
     $('#advanceLap').disabled = true;
     $('#simulationLabel').textContent = 'CHEQUERED FLAG';
     showToast('That is the flag. Someone tell the tyres they can stop now.');
+  } else if (change && change.stoppedNow) {
+    const late = raceState.pitWindowStart >= raceState.totalLaps - 2;
+    showToast(`${late ? 'Late' : 'Planned'} stop. Fresh rubber from here.`);
+  } else if (change && change.lap > previousLap) {
+    const phase = raceState.stopCompleted ? 'Second stint' : 'Opening tyres';
+    showToast(`Lap ${change.lap} of ${raceState.totalLaps}. ${phase}.`);
+  }
+  // The chart window and the sector insight both depend on how far we've run.
+  if (change && change.lapChanged) {
+    drawChart(chartMode);
+    updateSectorInsight();
   }
 }
 
@@ -675,12 +674,14 @@ $('#mapReset').addEventListener('click', () => {
 });
 
 $('#soundToggle').setAttribute('aria-label', 'Toggle focus mode');
+$('#soundToggle').setAttribute('aria-pressed', 'false');
 $('#soundToggle').title = 'Toggle focus mode';
 $('#soundToggle').textContent = '◎';
 $('#soundToggle').addEventListener('click', (event) => {
   document.body.classList.toggle('focus-mode');
   const active = document.body.classList.contains('focus-mode');
   event.currentTarget.classList.toggle('is-on', active);
+  event.currentTarget.setAttribute('aria-pressed', String(active));
   showToast(active ? 'Focus mode on. Map and strategy have the floor.' : 'Full desk restored.');
 });
 
@@ -690,7 +691,7 @@ $('#menuButton').addEventListener('click', (event) => {
   document.body.classList.toggle('nav-open', !expanded);
 });
 
-$$('.topbar a, .brand').forEach((link) => link.addEventListener('click', () => {
+$$('.topbar a, .quick-nav a').forEach((link) => link.addEventListener('click', () => {
   document.body.classList.remove('nav-open');
   $('#menuButton').setAttribute('aria-expanded', 'false');
 }));
