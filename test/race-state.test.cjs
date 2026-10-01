@@ -520,6 +520,7 @@ test('lap times format as minutes:seconds.milliseconds', () => {
   assert.equal(RACE_STATE.formatLapTime(0), '0:00.000');
   assert.equal(RACE_STATE.formatLapTime(80.1), '1:20.100');
   assert.equal(RACE_STATE.formatLapTime(59.999), '0:59.999');
+  assert.equal(RACE_STATE.formatLapTime(59.9996), '1:00.000', 'sub-millisecond rounding rolls over seconds and minutes');
   assert.equal(RACE_STATE.formatLapTime(60), '1:00.000');
   assert.equal(RACE_STATE.formatLapTime(-5), '0:00.000', 'negative clamps to zero');
 });

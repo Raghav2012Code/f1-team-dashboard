@@ -36,7 +36,7 @@ const CHART_WINDOW = 10;
 // Abstract "cost" scale, not seconds: the shape of the data survives a circuit
 // change even though the absolute lap times do not.
 const PACE_SHAPE = [66, 59, 62, 45, 50, 37, 43, 27, 32, 21, 34, 26];
-const NARRRO_SHAPE = [78, 73, 70, 77, 57, 61, 53, 55, 37, 42, 47, 39];
+const NAVARRO_SHAPE = [78, 73, 70, 77, 57, 61, 53, 55, 37, 42, 47, 39];
 const POSITION_SHAPE = [25, 25, 42, 42, 42, 42, 42, 42, 42, 42, 40, 42];
 const NAVARRO_POSITION_SHAPE = [58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 56, 58];
 
@@ -274,7 +274,7 @@ const RACE_STATE = (() => {
     const laps = chartWindow(state);
     const shapes = mode === 'position'
       ? [POSITION_SHAPE, NAVARRO_POSITION_SHAPE]
-      : [PACE_SHAPE, NARRRO_SHAPE];
+      : [PACE_SHAPE, NAVARRO_SHAPE];
     return {
       labels: laps.map(String),
       a: sliceShape(shapes[0], laps),
@@ -293,9 +293,11 @@ const RACE_STATE = (() => {
 
   function formatLapTime(totalSeconds) {
     const safe = Math.max(0, totalSeconds);
-    const minutes = Math.floor(safe / 60);
-    const seconds = Math.floor(safe % 60);
-    const milliseconds = Math.round((safe - Math.floor(safe)) * 1000);
+    const totalMs = Math.round(safe * 1000);
+    const milliseconds = totalMs % 1000;
+    const totalSec = Math.floor(totalMs / 1000);
+    const seconds = totalSec % 60;
+    const minutes = Math.floor(totalSec / 60);
     return `${minutes}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
   }
 
