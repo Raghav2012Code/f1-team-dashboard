@@ -13,7 +13,7 @@
     <header class="topbar">
       <a class="brand" href="#main" aria-label="Apex GP home"><span class="brand-mark">A</span><span>APEX<span class="brand-light"> / GP</span></span></a>
       <div class="event-name"><span class="live-dot"></span> RACE DESK <span class="event-divider">/</span> <span id="eventName">BELGIAN GRAND PRIX</span></div>
-      <div class="top-actions"><span class="weather-mini"><span id="weatherMiniIcon">☁</span> <span id="weatherMini">18°</span> <i></i> <span id="weatherMiniTrack">26°</span></span><button class="icon-button" id="soundToggle" aria-label="Toggle focus mode" title="Toggle focus mode">◎</button><button class="menu-button" id="menuButton" aria-expanded="false" aria-label="Open navigation">☰</button></div>
+      <div class="top-actions"><span class="weather-mini"><span id="weatherMiniIcon">☁</span> <span id="weatherMini">18°</span> <i></i> <span id="weatherMiniTrack">26°</span></span><button class="icon-button" id="soundToggle" aria-label="Toggle focus mode" title="Toggle focus mode" aria-pressed="false">◎</button><button class="menu-button" id="menuButton" aria-expanded="false" aria-label="Open navigation">☰</button></div>
     </header>
     <nav class="quick-nav" aria-label="Dashboard sections"><a href="#circuit">Circuit</a><a href="#strategy">Strategy</a><a href="#analytics">Analytics</a><a href="#control">Race control</a></nav>
 
@@ -45,7 +45,7 @@
 
       <section class="main-grid">
         <article class="panel circuit-panel" id="circuit">
-          <div class="panel-heading circuit-heading"><div><p class="eyebrow" id="mapEyebrow">LIVE RACE MAP · SPA-FRANCORCHAMPS</p><h2><span class="circuit-name" id="circuitName">Spa-Francorchamps</span> <span id="circuitLength">7.004 km</span></h2></div><div class="map-tools"><label class="map-picker"><span>CHOOSE CIRCUIT</span><select id="circuitSelect" aria-label="Choose a circuit map"><option value="live-spa">Spa · live race</option></select></label><button class="text-button" id="mapReset">RESET TO SPA <span>↺</span></button></div></div>
+          <div class="panel-heading circuit-heading"><div><p class="eyebrow" id="mapEyebrow">LIVE RACE MAP · SPA-FRANCORCHAMPS</p><h2><span class="circuit-name" id="circuitName">Spa-Francorchamps</span> <span id="circuitLength">7.004km</span></h2></div><div class="map-tools"><label class="map-picker"><span>CHOOSE CIRCUIT</span><select id="circuitSelect" aria-label="Choose a circuit map"><option value="live-spa">Spa · live race</option></select></label><button class="text-button" id="mapReset">RESET TO SPA <span>↺</span></button></div></div>
           <div class="map-wrap">
             <div class="map-legend"><span class="moving-legend"><i class="legend-line"></i> CIRCUIT</span><span class="moving-legend"><i class="legend-car field-key"></i> FIELD · 18</span><span class="moving-legend"><i class="legend-car car-yellow"></i> VOSS #27</span><span class="moving-legend"><i class="legend-car car-red"></i> NAVARRO #63</span><span class="sim-live" id="simulationState"><i></i><span id="simulationLabel">20 CARS MOVING</span></span></div>
             <div class="map-art" id="mapArt">
@@ -111,7 +111,7 @@
         </article>
         <article class="panel sector-panel">
           <div class="panel-heading"><div><p class="eyebrow">THE LITTLE BITS ADD UP</p><h2>Sector split</h2></div><span class="sector-live" data-lap-badge>LAP 28</span></div>
-          <div class="sector-head"><span>DRIVER</span><span>S1 <small id="sector1Name">LA SOURCE → RAIDILLON</small></span><span>S2 <small id="sector2Name">LES COMBES → FANGNES</small></span><span>S3 <small id="sector3Name">STAVELOT → BUS STOP</small></span></div>
+          <div class="sector-head"><span>DRIVER</span><span>S1 <small id="sector1Name">LA SOURCE → RAIDILLON</small></span><span>S2 <small id="sector2Name">LES COMBES → FAGNES</small></span><span>S3 <small id="sector3Name">STAVELOT → BUS STOP</small></span></div>
           <div class="sector-driver"><span class="sector-driver-name"><i class="chart-key yellow-key"></i> VOSS</span><span class="personal-best">32.441</span><span>41.208</span><span>33.579</span></div>
           <div class="sector-driver"><span class="sector-driver-name"><i class="chart-key red-key"></i> NAVARRO</span><span>32.607</span><span class="personal-best">41.102</span><span>33.882</span></div>
           <div class="sector-best"><span>BEST IN SECTOR</span><span>VOSS <i>−0.166</i></span><span>NAVARRO <i>−0.106</i></span><span>VOSS <i>−0.303</i></span></div>
