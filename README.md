@@ -6,7 +6,7 @@ It is a **design and interaction exercise**, not a telemetry product. Every driv
 
 - **Stack:** HTML, CSS, and vanilla JavaScript. Nothing else.
 - **Dependencies:** none. No build step, no `npm install`, no framework.
-- **Size:** ~124 KB across the six files the browser loads, plus a 42 KB map asset.
+- **Size:** ~121 KB across the six files the browser loads (about 48 KB over the wire gzipped), plus a 40 KB map asset.
 - **Race:** starts on the grid at lap 0 and runs to the selected circuit's real final lap.
 
 ---
