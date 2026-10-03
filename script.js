@@ -392,13 +392,9 @@ function applyCircuitContext(circuit) {
   });
   applyCircuitMotion(currentRoute);
 
-  // Changing circuit restarts the race: the lap clock, the time cap and the
-  // chequered flag all belong to the circuit you are looking at.
-  //
-  // The ordering hazard that used to sit here is gone. updateRaceReadouts()
-  // reads only raceState, and raceState was rebuilt by RACE_STATE.reset() at
-  // the top of this function, so there is no earlier state left for it to
-  // score against the new lap pace even if the calls below are rearranged.
+  // Everything below reads raceState, which reset() rebuilt at the top of this
+  // function, so there is no earlier state left to score against the new lap
+  // pace. renderPitPlan() still has to come after that reset.
   $('#advanceLap').disabled = false;
   $('#advanceLap').innerHTML = 'ADVANCE LAP <span>＋</span>';
   $('.status-pill').innerHTML = '<b></b> GREEN FLAG';
