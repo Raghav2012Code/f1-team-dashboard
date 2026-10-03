@@ -408,10 +408,10 @@ function applyCircuitContext(circuit) {
   $('.status-pill b').style.background = '';
   $('#simulationLabel').textContent = circuit.slug === 'live-spa' ? '20 CARS MOVING' : '20 CARS · TRACK SYNC';
   $('#simulationState').classList.remove('sim-preview');
-  // renderPitPlan() calls updateRaceReadouts(), so it has to run after the
-  // reset above.
+  // renderPitPlan() ends by calling updateRaceReadouts() itself, so this is the
+  // one full readout pass for the new circuit. Calling it again here was a
+  // second identical pass over every node it writes.
   renderPitPlan();
-  updateRaceReadouts();
   // Last, so it reads the reset state rather than the previous circuit's.
   updateSectorInsight();
   drawChart(chartMode);
