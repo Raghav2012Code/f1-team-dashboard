@@ -243,6 +243,16 @@ function setMapCredit(label, url, detail, sourceLabel = 'Formula1.com · 2026') 
   credit.append(link, document.createTextNode(` · ${detail}`));
 }
 
+// The turn readout is one shell with three slots: an icon, a bold title, a
+// detail line, and a trailing element. Four call sites were each rebuilding
+// that shell inline, so the markup was repeated in full every time.
+const NORTH_MARK = '<span class="map-north">N ↑</span>';
+const PICK_A_CORNER = ['Pick a corner', 'Tap a turn marker for the engineer\'s note.', NORTH_MARK];
+
+function setTurnReadout(title, detail, tail) {
+  $('#turnReadout').innerHTML = `<span class="turn-readout-icon">⌖</span><span><b>${title}</b><small>${detail}</small></span>${tail}`;
+}
+
 // The lap badges in race control and the sector panel are written from here.
 function updateLapBadges() {
   const badge = RACE_STATE.lapBadgeFor(raceState.lap);
@@ -446,7 +456,7 @@ function showCircuitMap(slug = 'live-spa') {
     movingLegend.forEach((item) => { item.hidden = false; });
     $('#mapFooter').hidden = false;
     $('#cornerLine').hidden = false;
-    $('#turnReadout').innerHTML = '<span class="turn-readout-icon">⌖</span><span><b>Pick a corner</b><small>Tap a turn marker for the engineer\'s note.</small></span><span class="map-north">N ↑</span>';
+    setTurnReadout(...PICK_A_CORNER);
     $('#mapReset').innerHTML = 'RESET VIEW <span>↺</span>';
     setMapCredit('Map', 'https://commons.wikimedia.org/wiki/File:2022_F1_CourseLayout_Belgium.svg', 'ごひょううべこ · CC BY-SA 4.0', '2022 F1 CourseLayout · Wikimedia Commons');
     return;
@@ -470,7 +480,7 @@ function showCircuitMap(slug = 'live-spa') {
   movingLegend.forEach((item) => { item.hidden = false; });
   $('#mapFooter').hidden = true;
   $('#cornerLine').hidden = true;
-  $('#turnReadout').innerHTML = `<span class="turn-readout-icon">⌖</span><span><b>${circuit.name} · ${circuit.laps} laps</b><small>Twenty cars follow this official layout's mapped racing line as the field runs.</small></span><a class="map-source-link" href="${circuit.eventUrl}" target="_blank" rel="noreferrer">SOURCE ↗</a>`;
+  setTurnReadout(`${circuit.name} · ${circuit.laps} laps`, "Twenty cars follow this official layout's mapped racing line as the field runs.", `<a class="map-source-link" href="${circuit.eventUrl}" target="_blank" rel="noreferrer">SOURCE ↗</a>`);
   $('#mapReset').innerHTML = 'BACK TO LIVE SPA <span>↶</span>';
   setMapCredit('Official map', circuit.eventUrl, 'track diagram served by Formula1.com; markings kept as published');
 }
@@ -550,7 +560,7 @@ $$('.turn').forEach((turn) => {
     $$('.turn.selected').forEach((node) => node.classList.remove('selected'));
     turn.classList.add('selected');
     const [name, note] = turnNotes[turn.dataset.turn] || [`Turn ${turn.dataset.turn}`, 'Corner note pending. The map says corner; the pit wall agrees.'];
-    $('#turnReadout').innerHTML = `<span class="turn-readout-icon">⌖</span><span><b>Turn ${turn.dataset.turn} · ${name}</b><small>${note}</small></span><span class="map-north">N ↑</span>`;
+    setTurnReadout(`Turn ${turn.dataset.turn} · ${name}`, note, NORTH_MARK);
   };
   turn.addEventListener('click', activate);
   turn.addEventListener('keydown', (event) => {
@@ -664,7 +674,7 @@ $('#mapReset').addEventListener('click', () => {
     return;
   }
   $$('.turn.selected').forEach((node) => node.classList.remove('selected'));
-  $('#turnReadout').innerHTML = '<span class="turn-readout-icon">⌖</span><span><b>Pick a corner</b><small>Tap a turn marker for the engineer\'s note.</small></span><span class="map-north">N ↑</span>';
+  setTurnReadout(...PICK_A_CORNER);
   $$('.team-car-dot').forEach((marker) => { marker.style.opacity = '1'; });
   showToast('Map reset. Spa remains stubbornly the same shape.');
 });
