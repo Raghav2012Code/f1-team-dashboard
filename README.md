@@ -6,7 +6,7 @@ It is a **design and interaction exercise**, not a telemetry product. Every driv
 
 - **Stack:** HTML, CSS, and vanilla JavaScript. Nothing else.
 - **Dependencies:** none. No build step, no `npm install`, no framework.
-- **Size:** ~88 KB of code across five files, plus a 42 KB map asset.
+- **Size:** ~124 KB across the six files the browser loads, plus a 42 KB map asset.
 - **Race:** starts on the grid at lap 0 and runs to the selected circuit's real final lap.
 
 ---
@@ -197,7 +197,7 @@ None of these is a style linter, and none of them needs an install step: there i
 
 `node --test` covers the race model only, and that is on purpose. `race-state.js` is pure, so the tests need no browser and no DOM shim — the full 24-circuit sweep, including every lap from the grid to the chequered flag, finishes in milliseconds.
 
-Every test is named after a bug that actually shipped. The full list of eight came from failures caught by hand-written browser scripts that were then thrown away, so the assertions live in the suite now:
+Nine of them are named after bugs that actually shipped. They came from failures caught by hand-written browser scripts that were then thrown away, so the assertions live in the suite now:
 
 | Test | What it prevents |
 | --- | --- |
@@ -209,6 +209,7 @@ Every test is named after a bug that actually shipped. The full list of eight ca
 | the chart plots only laps actually run | two invented points on the grid |
 | chart titles reflect the window | "last 2 laps" when one had been run |
 | stint bars never go negative or past 100% | a bar overflowing its track |
+| pit window is always inside the race and never before lap 2 | `Math.round(laps * 0.45)` opening the box before the start or past the flag |
 
 Two of them assert their own preconditions — the float-drift test proves the naive sum really does lose the final lap for that circuit before trusting the epsilon, and the circuit-switch test proves the leaked elapsed time really would have passed the next circuit's flag. If the data changes and a precondition stops holding, the test fails loudly instead of quietly passing.
 

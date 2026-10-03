@@ -116,7 +116,7 @@ for (const rec of records) {
   }
 }
 
-// 6. Every compound class the JS writes must have a matching CSS colour rule,
+// 7. Every compound class the JS writes must have a matching CSS colour rule,
 // or the dot/chip silently renders in the wrong colour after a pit stop.
 const css = read('styles.css');
 const engine = read('race-state.js');
@@ -129,7 +129,7 @@ for (const compound of ['soft', 'medium', 'hard']) {
   }
 }
 
-// 7. Compounds used in a TYRE_PLANS entry must be one the stylesheet knows.
+// 8. Compounds used in a TYRE_PLANS entry must be one the stylesheet knows.
 // The plans moved to race-state.js, so this has to read them from there or it
 // quietly stops checking anything.
 const planBlock = (engine.match(/const TYRE_PLANS = \{[\s\S]*?\n\};/) || [])[0] || '';
@@ -139,7 +139,7 @@ for (const m of planBlock.matchAll(/\b(first|second):\s*'(\w+)'/g)) {
   }
 }
 
-// 8. Descendant selectors on flex containers silently change layout: wrapping
+// 9. Descendant selectors on flex containers silently change layout: wrapping
 // text in a <span> turns one flex child into several. Flag the containers
 // that hold venue/state text next to a tag.
 for (const sel of ['weather-title']) {
@@ -149,7 +149,7 @@ for (const sel of ['weather-title']) {
   }
 }
 
-// 9. The race model's fields may only be written inside race-state.js. This is
+// 10. The race model's fields may only be written inside race-state.js. This is
 // the invariant that issue #7 asked for: a circuit switch used to score the
 // previous circuit's elapsed time against the new lap pace because the reset
 // order was only documented in a comment. Reads through `raceState.foo` are
@@ -176,7 +176,7 @@ for (const field of RACE_FIELDS) {
   for (const m of script.matchAll(bare)) blame(m.index + m[1].length, field, '');
 }
 
-// 10. Every engine entry point script.js calls must actually be exported.
+// 11. Every engine entry point script.js calls must actually be exported.
 // The export list is the last `return {` in the file; earlier ones are plain
 // object literals returned by create() and pitWindowFor().
 const exportBlock = engine.slice(engine.lastIndexOf('return {'));
@@ -186,7 +186,7 @@ for (const m of script.matchAll(/RACE_STATE\.(\w+)\(/g)) {
   }
 }
 
-// 11. No file may contain UTF-8 that was decoded as cp1252 and re-encoded. That
+// 12. No file may contain UTF-8 that was decoded as cp1252 and re-encoded. That
 // double round trip is what turns U+00B7 into "A-circumflex, period" and renders
 // as "A-circumflex, period" in the page. It is easy to cause by editing a file
 // through a tool that assumes the system codepage, and it is invisible in a
