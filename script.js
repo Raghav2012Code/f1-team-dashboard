@@ -261,15 +261,11 @@ function updateLapBadges() {
   });
 }
 
-function stintBars() {
-  return $$('.stint-visual');
-}
-
 // The strategy desk's stint bars: the first bar fills as the opening stint is
 // used, and the second one takes over once the stop is made. All of the
 // arithmetic lives in RACE_STATE.stintShares() -- this only projects it.
 function updateStintVisuals() {
-  const stints = stintBars();
+  const stints = $$('.stint-visual');
   ['mara', 'eli'].forEach((key, index) => {
     const bars = stints[index] ? stints[index].querySelectorAll('.stint-bar') : [];
     if (bars.length < 2) return;
@@ -425,12 +421,11 @@ function updateSectorInsight() {
   const circuit = raceState.circuit;
   if (!circuit) return;
   const finale = circuit.sectors[2].split('→').pop().trim();
-  const who = 'Voss';
   $('#sectorInsight').innerHTML = raceState.lap === 0
     ? `<b>No laps run yet.</b> Sector data lands after the first flying lap at ${circuit.venue}.`
     : raceState.stopCompleted
-      ? `<b>${who} is quicker into ${finale}.</b> Fresh rubber, so the run to the flag should be where it is won.`
-      : `<b>${who} is quicker into ${finale}.</b> The opening tyres are still fresh. Conserve them.`;
+      ? `<b>Voss is quicker into ${finale}.</b> Fresh rubber, so the run to the flag should be where it is won.`
+      : `<b>Voss is quicker into ${finale}.</b> The opening tyres are still fresh. Conserve them.`;
 }
 
 function showCircuitMap(slug = 'live-spa') {
