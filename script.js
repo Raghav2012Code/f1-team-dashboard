@@ -67,40 +67,6 @@ const turnNotes = {
   19: ['Bus Stop', 'Last chance to out-brake someone before the line. Or out-brake yourself.'],
 };
 
-// Turn marker positions, in the bundled Spa SVG's own coordinate space.
-// Coordinates are kept as written rather than parsed to numbers, because
-// `translate(462 364.4)` and `translate(462.0 364.4)` are the same point but
-// not the same attribute value. These 19 markers were 2.5 KB of repeated
-// <g> markup in index.html; as data they are 418 bytes, and they are built by
-// addTurnMarkers() below.
-const TURN_MARKERS = [
-  [1, '25.7', '293.7'], [2, '151.2', '179.2'], [3, '139.3', '129.1'], [4, '192.5', '153.3'],
-  [5, '432.3', '30.6'], [6, '435.4', '81.3'], [7, '482.6', '40.3'], [8, '524.2', '153.6'],
-  [9, '469.2', '83.3'], [10, '342.4', '119.3'], [11, '342.2', '189.4'], [12, '467.7', '220.5'],
-  [13, '424.5', '268.7'], [14, '511.9', '302.8'], [15, '462', '364.4'], [16, '365', '222.5'],
-  [17, '284.9', '183.9'], [18, '161.1', '254.1'], [19, '168.3', '197.2'],
-];
-
-// Build the 19 tappable turn markers into the overlay. Must run before the
-// handlers are attached below, and before showCircuitMap() reads the overlay.
-function addTurnMarkers() {
-  const ns = 'http://www.w3.org/2000/svg';
-  const overlay = $('#trackOverlay');
-  TURN_MARKERS.forEach(([number, x, y]) => {
-    const marker = document.createElementNS(ns, 'g');
-    marker.setAttribute('class', 'turn');
-    marker.dataset.turn = number;
-    marker.setAttribute('tabindex', '0');
-    marker.setAttribute('role', 'button');
-    marker.setAttribute('aria-label', `Turn ${number}`);
-    marker.setAttribute('transform', `translate(${x} ${y})`);
-    const dot = document.createElementNS(ns, 'circle');
-    dot.setAttribute('r', '14');
-    marker.appendChild(dot);
-    overlay.insertBefore(marker, $('#fieldDots'));
-  });
-}
-
 function showToast(message) {
   const toast = $('#toast');
   toast.textContent = message;
@@ -277,9 +243,7 @@ function setMapCredit(label, url, detail, sourceLabel = 'Formula1.com · 2026') 
   credit.append(link, document.createTextNode(` · ${detail}`));
 }
 
-// The turn readout is one shell with three slots: an icon, a bold title, a
-// detail line, and a trailing element. Four call sites were each rebuilding
-// that shell inline, so the markup was repeated in full every time.
+// One shell, three slots. Four call sites used to rebuild it inline.
 const NORTH_MARK = '<span class="map-north">N ↑</span>';
 const PICK_A_CORNER = ['Pick a corner', 'Tap a turn marker for the engineer\'s note.', NORTH_MARK];
 
@@ -443,8 +407,7 @@ function applyCircuitContext(circuit) {
   $('#simulationLabel').textContent = circuit.slug === 'live-spa' ? '20 CARS MOVING' : '20 CARS · TRACK SYNC';
   $('#simulationState').classList.remove('sim-preview');
   // renderPitPlan() ends by calling updateRaceReadouts() itself, so this is the
-  // one full readout pass for the new circuit. Calling it again here was a
-  // second identical pass over every node it writes.
+  // one full readout pass for the new circuit.
   renderPitPlan();
   // Last, so it reads the reset state rather than the previous circuit's.
   updateSectorInsight();
@@ -583,12 +546,10 @@ $('#advanceLap').addEventListener('click', () => {
   updateRaceReadouts(RACE_STATE.advanceLap(raceState));
 });
 
-// The race loop. It stops itself at the chequered flag instead of waking the
-// browser every frame for the rest of the session: tickFrame() returns null
-// once the flag is down, so the frames were doing nothing. startRaceLoop() is
-// re-armed by applyCircuitContext, which is the only thing that puts the race
-// back on the grid. The guard is what stops a circuit change from leaving two
-// loops running at once.
+// The race loop stops at the chequered flag rather than waking the browser every
+// frame for the rest of the session, since tickFrame() returns null from then on.
+// applyCircuitContext() re-arms it, and the guard is what stops a circuit change
+// from leaving two loops running.
 let raceLoopRunning = false;
 
 function animateRace(timestamp) {
@@ -602,9 +563,6 @@ function startRaceLoop() {
   raceLoopRunning = true;
   requestAnimationFrame(animateRace);
 }
-
-// Build the markers before the handlers are attached to them.
-addTurnMarkers();
 
 $$('.turn').forEach((turn) => {
   const activate = () => {
