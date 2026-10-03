@@ -415,6 +415,10 @@ function applyCircuitContext(circuit) {
   // Last, so it reads the reset state rather than the previous circuit's.
   updateSectorInsight();
   drawChart(chartMode);
+  // Last: the reset above cleared raceFinished, so this re-arms the loop. If the
+  // previous circuit had already reached its flag the loop had stopped, and
+  // this is what starts it again.
+  startRaceLoop();
 }
 
 function updateSectorInsight() {
@@ -545,8 +549,23 @@ $('#advanceLap').addEventListener('click', () => {
   updateRaceReadouts(RACE_STATE.advanceLap(raceState));
 });
 
+// The race loop. It stops itself at the chequered flag instead of waking the
+// browser every frame for the rest of the session: tickFrame() returns null
+// once the flag is down, so the frames were doing nothing. startRaceLoop() is
+// re-armed by applyCircuitContext, which is the only thing that puts the race
+// back on the grid. The guard is what stops a circuit change from leaving two
+// loops running at once.
+let raceLoopRunning = false;
+
 function animateRace(timestamp) {
   updateRaceReadouts(RACE_STATE.tickFrame(raceState, timestamp));
+  if (raceState.raceFinished) { raceLoopRunning = false; return; }
+  requestAnimationFrame(animateRace);
+}
+
+function startRaceLoop() {
+  if (raceLoopRunning) return;
+  raceLoopRunning = true;
   requestAnimationFrame(animateRace);
 }
 
@@ -701,4 +720,3 @@ $$('.topbar a, .quick-nav a').forEach((link) => link.addEventListener('click', (
 // circuit context is applied.
 addFieldDots();
 showCircuitMap('live-spa');
-requestAnimationFrame(animateRace);
