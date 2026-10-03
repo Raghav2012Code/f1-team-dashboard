@@ -69,7 +69,7 @@ The dashboard is built to be poked at, so give it a minute:
 The track map is two layers stacked on top of each other:
 
 - **A base image** of the circuit — either the bundled `assets/spa-francorchamps-map.svg`, or an official diagram hot-linked from Formula1.com.
-- **An SVG overlay** in the same coordinate space. It holds a single invisible `<path>` describing the racing line, plus a group per car.
+- **An SVG overlay** in the same coordinate space. It holds a single invisible `<path>` describing the racing line, a `<g>` per car, and the 19 turn markers — the last two are built by `script.js` from data tables rather than written out as markup.
 
 Each car is an SVG `<g>` containing an `<animateMotion>` element with an `<mpath>` reference to that path. The per-car `dur` is derived from that driver's lap time (scaled down by 3× so a lap takes about 36 seconds instead of nearly two minutes), and each car starts at a negative `begin` offset so the field is spread around the circuit instead of nose-to-tail. `rotate="auto"` turns each car to face the direction of travel.
 
@@ -80,10 +80,11 @@ Switching circuits swaps the path's `d` attribute and the overlay's `viewBox` to
 ## Project structure
 
 ```
-index.html                     Markup, panel structure, the Spa turn markers
+index.html                     Markup and panel structure
 styles.css                     The entire theme and layout (shipped minified)
 race-state.js                  The race model: pure arithmetic, no DOM, no timers
 script.js                      Rendering and interaction; owns no race state
+                               and builds the 19 turn markers
 circuits-data.js               23 circuits: name, length, laps, map URL, event URL
 circuit-routes.js              Traced racing-line paths, keyed by circuit slug
 assets/spa-francorchamps-map.svg   Bundled Spa layout, 19 turns + sector markings
