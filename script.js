@@ -506,7 +506,9 @@ function updateRaceReadouts(change) {
   if (change === null) return;
   const previousLap = change ? change.previousLap : raceState.lap;
   $('#lapReadout').textContent = RACE_STATE.lapLabel(raceState);
-  $('#progressFill').style.width = `${RACE_STATE.progressPercent(raceState)}%`;
+  // scaleX, not width: the fill has no text, so transform keeps this off the
+  // layout path. The bar itself is width:100% in CSS.
+  $('#progressFill').style.transform = `scaleX(${RACE_STATE.progressPercent(raceState) / 100})`;
   updateLapBadges();
   $('#maraAge').textContent = RACE_STATE.tyreAgeLabel(raceState.maraAge);
   $('#eliAge').textContent = RACE_STATE.tyreAgeLabel(raceState.eliAge);
