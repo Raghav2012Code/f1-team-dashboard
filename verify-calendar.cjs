@@ -7,6 +7,7 @@
 // as a Malaysia-hosted event in October, so rounds 4+ shifted down by two.
 const fs = require('fs');
 const path = require('path');
+const { MONTHS, DAYS } = require('./tools-calendar.cjs');
 
 const src = fs.readFileSync(path.join(__dirname, 'circuits-data.js'), 'utf8');
 const records = src.split('\n')
@@ -54,10 +55,6 @@ const OFFICIAL = [
   [22, 'Qatar Grand Prix', 'Lusail International Circuit', 5.419, 57, '2026-11-29'],
   [23, 'Abu Dhabi Grand Prix', 'Yas Marina Circuit', 5.281, 58, '2026-12-06'],
 ];
-
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'];
-const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const problems = [];
 

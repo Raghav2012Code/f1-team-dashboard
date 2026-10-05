@@ -6,6 +6,7 @@
 // Run: node tools-lint.cjs
 const fs = require('fs');
 const path = require('path');
+const { MONTHS, DAYS } = require('./tools-calendar.cjs');
 
 const dir = __dirname;
 const read = (f) => fs.readFileSync(path.join(dir, f), 'utf8');
@@ -71,11 +72,8 @@ for (const rec of records) {
   const dateStr = (rec.match(/date: '([^']+)'/) || [])[1];
   const iso = dateStr && /(\d{1,2}) ([A-Z][a-z]+)/.exec(dateStr);
   if (iso) {
-    const months = ['January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'];
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const when = new Date(Date.UTC(2026, months.indexOf(iso[2]), Number(iso[1]), 12));
-    const realDay = days[when.getUTCDay()];
+    const when = new Date(Date.UTC(2026, MONTHS.indexOf(iso[2]), Number(iso[1]), 12));
+    const realDay = DAYS[when.getUTCDay()];
     if (dateStr.indexOf(realDay) !== 0) {
       note(`${slug}: date "${dateStr}" names the wrong weekday; 2026-06-01 style date falls on a ${realDay}`);
     }
@@ -142,10 +140,11 @@ for (const m of planBlock.matchAll(/\b(first|second):\s*'(\w+)'/g)) {
 // 9. Descendant selectors on flex containers silently change layout: wrapping
 // text in a <span> turns one flex child into several. Flag the containers
 // that hold venue/state text next to a tag.
-for (const sel of ['weather-title']) {
-  const rule = (css.match(new RegExp(`\\.${sel}\\{[^}]*\\}`)) || [])[0] || '';
-  if (/display:flex/.test(rule) && new RegExp(`\\.${sel} span\\{`).test(css)) {
-    note(`.${sel} is a flex container and has a descendant .${sel} span rule; use a class so a new wrapper does not change the child count`);
+const flexSel = 'weather-title';
+{
+  const rule = (css.match(new RegExp(`\\.${flexSel}\\{[^}]*\\}`)) || [])[0] || '';
+  if (/display:flex/.test(rule) && new RegExp(`\\.${flexSel} span\\{`).test(css)) {
+    note(`.${flexSel} is a flex container and has a descendant .${flexSel} span rule; use a class so a new wrapper does not change the child count`);
   }
 }
 

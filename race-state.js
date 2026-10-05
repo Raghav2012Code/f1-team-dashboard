@@ -94,8 +94,8 @@ const RACE_STATE = (() => {
       state.stopCompleted = true;
       stoppedNow = true;
     }
-    const onStintTwo = state.pitPlanActive && state.stopCompleted;
-    const age = onStintTwo ? state.lap - state.pitWindowStart : state.lap;
+    const secondStint = onStintTwo(state);
+    const age = secondStint ? state.lap - state.pitWindowStart : state.lap;
     state.maraAge = age;
     state.eliAge = age;
 
@@ -134,9 +134,8 @@ const RACE_STATE = (() => {
   // not depend on the caller.
   function tickFrame(state, timestamp) {
     if (state.lastFrameTime === null) state.lastFrameTime = timestamp;
-    // Clamp at zero so a timestamp reset can never drive the lap counter
-    // negative, and cap the step so a backgrounded tab does not fast-forward.
-    const delta = Math.max(0, Math.min((timestamp - state.lastFrameTime) / 1000, FRAME_STEP_CAP));
+    // tick() clamps and floors the delta, so pass the raw step through.
+    const delta = (timestamp - state.lastFrameTime) / 1000;
     state.lastFrameTime = timestamp;
     return tick(state, delta);
   }

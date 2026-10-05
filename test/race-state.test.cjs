@@ -44,25 +44,16 @@ const { RACE_STATE, OFFICIAL_F1_CIRCUITS } = loadGlobals(
 
 // Values built inside the vm context carry that context's prototypes, so
 // assert.deepStrictEqual would fail comparing an identical array across realms.
-// Re-wrap through JSON to compare contents.
-const plain = (value) => JSON.parse(JSON.stringify(value));
+const plain = (value) => structuredClone(value);
 
 // The live Spa entry is a view of the `belgium` round, not a calendar round of
 // its own, so it is exercised alongside the 23 official circuits. This mirrors
 // the liveSpaMap literal in script.js.
+const BELGIUM = OFFICIAL_F1_CIRCUITS.find((c) => c.slug === 'belgium');
 const LIVE_SPA = {
+  ...BELGIUM,
   slug: 'live-spa',
-  name: 'Belgium · Spa-Francorchamps',
   shortName: 'Spa-Francorchamps',
-  length: '7.004km',
-  laps: 44,
-  date: 'Sunday, 19 July',
-  country: 'Belgium',
-  lapBase: 107.228,
-  sectors: ['La Source → Raidillon', 'Les Combes → Fagnes', 'Stavelot → Bus Stop'],
-  corner: 'Eau Rouge',
-  venue: 'Spa',
-  weather: { air: 18, track: 26, rain: 30, wind: 'NW 8 km/h', asphalt: 'DRY · COOLING' },
 };
 
 const ALL_CIRCUITS = [LIVE_SPA, ...OFFICIAL_F1_CIRCUITS];
@@ -73,29 +64,6 @@ function runToFlag(circuit) {
   RACE_STATE.reset(state, circuit);
   const clicks = runTo(state);
   return { state, clicks };
-}
-
-// Advance a state to its flag, with a hard iteration bound.
-//
-// The bound is the point: an unbounded `while (state.lap < circuit.laps)` hangs
-// the whole run if the engine can never reach the flag, which is exactly the
-// bug several of these tests exist to catch. Mutation testing found that the
-// suite stopped reporting and started timing out instead. A cap turns a hang
-// into a legible assertion failure.
-function runTo(state, label = 'race') {
-  const limit = state.totalLaps + 100;
-  let clicks = 0;
-  while (state.lap < state.totalLaps) {
-    if (clicks >= limit) {
-      assert.fail(
-        `${label}: still on lap ${state.lap}/${state.totalLaps} after ${clicks} advances; `
-        + `the flag is unreachable (elapsed ${state.elapsed}, lapSeconds ${state.lapSeconds})`,
-      );
-    }
-    RACE_STATE.advanceLap(state);
-    clicks += 1;
-  }
-  return clicks;
 }
 
 // Advance a state to a given lap number, bounded the same way.
@@ -110,6 +78,11 @@ function runToLap(state, target, label = 'race') {
     steps += 1;
   }
   return steps;
+}
+
+// Advance a state to its flag: the flag is just lap totalLaps.
+function runTo(state, label = 'race') {
+  return runToLap(state, state.totalLaps, label);
 }
 
 // ---------------------------------------------------------------------------

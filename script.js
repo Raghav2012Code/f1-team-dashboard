@@ -188,21 +188,12 @@ function applyCircuitMotion(route) {
 }
 
 const circuitSelect = $('#circuitSelect');
-// The bundled Spa SVG is the "live race" view. It mirrors the `belgium` entry
-// in circuits-data.js, which is why the two agree on length, laps and lap time.
+// The bundled Spa SVG is the "live race" view. It derives from the `belgium`
+// entry in circuits-data.js, so the two agree on length, laps and lap time.
 const liveSpaMap = {
+  ...OFFICIAL_F1_CIRCUITS.find((circuit) => circuit.slug === 'belgium'),
   slug: 'live-spa',
-  name: 'Belgium · Spa-Francorchamps',
   shortName: 'Spa-Francorchamps',
-  length: '7.004km',
-  laps: 44,
-  date: 'Sunday, 19 July',
-  country: 'Belgium',
-  lapBase: 107.228,
-  sectors: ['La Source → Raidillon', 'Les Combes → Fagnes', 'Stavelot → Bus Stop'],
-  corner: 'Eau Rouge',
-  venue: 'Spa',
-  weather: { air: 18, track: 26, rain: 30, wind: 'NW 8 km/h', asphalt: 'DRY · COOLING' },
   image: 'assets/spa-francorchamps-map.svg',
   alt: 'Spa-Francorchamps track layout with all 19 numbered turns, sectors, and DRS detection zones',
 };
@@ -275,9 +266,8 @@ function updateStintVisuals() {
     // 7px of horizontal padding, which reads as a stray colour block.
     firstBar.classList.toggle('is-empty', firstPercent === 0);
     secondBar.classList.toggle('is-empty', secondPercent === 0);
-    const laps = RACE_STATE.lapNoun;
-    firstBar.querySelector('b').textContent = laps(firstLength);
-    secondBar.querySelector('b').textContent = onSecond ? laps(secondLength) : 'planned';
+    firstBar.querySelector('b').textContent = RACE_STATE.lapNoun(firstLength);
+    secondBar.querySelector('b').textContent = onSecond ? RACE_STATE.lapNoun(secondLength) : 'planned';
     firstBar.classList.toggle('stint-active', !onSecond);
     secondBar.classList.toggle('stint-active', onSecond);
     // Plan B means no second compound: the opening tyre runs all the way.
@@ -405,7 +395,6 @@ function applyCircuitContext(circuit) {
   $('.status-pill').style.color = '';
   $('.status-pill b').style.background = '';
   $('#simulationLabel').textContent = circuit.slug === 'live-spa' ? '20 CARS MOVING' : '20 CARS · TRACK SYNC';
-  $('#simulationState').classList.remove('sim-preview');
   // renderPitPlan() ends by calling updateRaceReadouts() itself, so this is the
   // one full readout pass for the new circuit.
   renderPitPlan();
@@ -600,19 +589,19 @@ function chartDataFor() {
   return {
     pace: {
       title: RACE_STATE.chartTitleFor('pace', raceState),
-      stat: () => (RACE_STATE.chartIsEmpty('pace', raceState)
+      stat: RACE_STATE.chartIsEmpty('pace', raceState)
         ? `<b>${reference}</b> <i>reference pace</i>`
-        : `<b>${reference}</b> <i>−0.4s vs. field</i>`),
+        : `<b>${reference}</b> <i>−0.4s vs. field</i>`,
       ...pace,
     },
     position: {
       title: RACE_STATE.chartTitleFor('position', raceState),
-      stat: () => '<b>P4 / P7</b> <i>both holding</i>',
+      stat: '<b>P4 / P7</b> <i>both holding</i>',
       ...position,
     },
     sector: {
       title: RACE_STATE.chartTitleFor('sector', raceState),
-      stat: () => '<b>−0.575s</b> <i>team delta</i>',
+      stat: '<b>−0.575s</b> <i>team delta</i>',
       ...sector,
     },
   };
@@ -622,7 +611,7 @@ function drawChart(mode) {
   chartMode = mode;
   const data = chartDataFor()[mode];
   $('#chartTitle').textContent = data.title;
-  $('#chartStat').innerHTML = typeof data.stat === 'function' ? data.stat() : data.stat;
+  $('#chartStat').innerHTML = data.stat;
   $$('.chart-tab').forEach((button) => {
     const selected = button.dataset.chart === mode;
     button.classList.toggle('selected', selected);
