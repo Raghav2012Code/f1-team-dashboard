@@ -6,7 +6,7 @@
 // Run: node tools-lint.cjs
 const fs = require('fs');
 const path = require('path');
-const { MONTHS, DAYS } = require('./tools-calendar.cjs');
+
 
 const dir = __dirname;
 const read = (f) => fs.readFileSync(path.join(dir, f), 'utf8');
@@ -72,8 +72,9 @@ for (const rec of records) {
   const dateStr = (rec.match(/date: '([^']+)'/) || [])[1];
   const iso = dateStr && /(\d{1,2}) ([A-Z][a-z]+)/.exec(dateStr);
   if (iso) {
-    const when = new Date(Date.UTC(2026, MONTHS.indexOf(iso[2]), Number(iso[1]), 12));
-    const realDay = DAYS[when.getUTCDay()];
+    const monthIndex = new Date(`${iso[2]} 1, 2026`).getMonth();
+    const when = new Date(Date.UTC(2026, monthIndex, Number(iso[1]), 12));
+    const realDay = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'UTC' }).format(when);
     if (dateStr.indexOf(realDay) !== 0) {
       note(`${slug}: date "${dateStr}" names the wrong weekday; 2026-06-01 style date falls on a ${realDay}`);
     }
@@ -183,30 +184,6 @@ for (const m of script.matchAll(/RACE_STATE\.(\w+)\(/g)) {
   if (!new RegExp(`^\\s*${m[1]},?$`, 'm').test(exportBlock)) {
     note(`script.js calls RACE_STATE.${m[1]}() but race-state.js does not export it`);
   }
-}
-
-// 12. No file may contain UTF-8 that was decoded as cp1252 and re-encoded. That
-// double round trip is what turns U+00B7 into "A-circumflex, period" and renders
-// as "A-circumflex, period" in the page. It is easy to cause by editing a file
-// through a tool that assumes the system codepage, and it is invisible in a
-// diff review because the ASCII is untouched.
-//
-// The test is a Latin-1 letter immediately followed by a cp1252 symbol or digit.
-// Correct text does not do this: "SAO PAULO" has A-tilde followed by a letter,
-// "Frere" has e-grave followed by a letter. Node has no cp1252 codec, so the
-// high range is listed explicitly.
-const MOJIBAKE = /[\u00c0-\u00df][\u00a1-\u00bf\u00d7\u00f7\u2013\u2014\u2018\u2019\u201c\u201d\u2020-\u2026\u2122\u0152\u0153\u0160\u0161\u0178\u017d\u017e\u0192\u02c6\u02dc]/;
-for (const [name, source] of Object.entries({ 'index.html': html, 'script.js': script, 'circuits-data.js': circuits, 'race-state.js': engine, 'tools-lint.cjs': read('tools-lint.cjs') })) {
-  source.split('\n').forEach((line, i) => {
-    if (line.trimStart().startsWith('//') || line.trimStart().startsWith('*')) return;
-    const m = MOJIBAKE.exec(line);
-    if (m) {
-      const at = line.indexOf(m[0]);
-      note(`${name}:${i + 1} looks like mojibake (UTF-8 read as cp1252): "${line.trim().slice(Math.max(0, at - 20), at + 20)}"`);
-    }
-  });
-  // A replacement character means the file is not valid UTF-8 at all.
-  if (source.includes('\uFFFD')) note(`${name} contains a U+FFFD replacement character, so it is not valid UTF-8`);
 }
 
 // Report

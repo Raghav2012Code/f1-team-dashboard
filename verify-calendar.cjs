@@ -7,7 +7,7 @@
 // as a Malaysia-hosted event in October, so rounds 4+ shifted down by two.
 const fs = require('fs');
 const path = require('path');
-const { MONTHS, DAYS } = require('./tools-calendar.cjs');
+
 
 const src = fs.readFileSync(path.join(__dirname, 'circuits-data.js'), 'utf8');
 const records = src.split('\n')
@@ -69,8 +69,9 @@ OFFICIAL.forEach(([round, gp, circuit, km, laps, iso], i) => {
     return;
   }
   const when = new Date(`${iso}T12:00:00Z`);
-  const weekday = DAYS[when.getUTCDay()];
-  const longDate = `${weekday}, ${when.getUTCDate()} ${MONTHS[when.getUTCMonth()]}`;
+  const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'UTC' }).format(when);
+  const month = new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' }).format(when);
+  const longDate = `${weekday}, ${when.getUTCDate()} ${month}`;
 
   if (rec.date !== longDate) {
     problems.push(`round ${round} ${rec.slug}: date is "${rec.date}", official is "${longDate}" (${iso}, a ${weekday})`);

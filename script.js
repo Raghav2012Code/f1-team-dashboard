@@ -123,9 +123,7 @@ const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
 let reducedMotion = reducedMotionQuery.matches;
 document.body.classList.toggle('reduced-motion', reducedMotion);
 
-function carPhase(driver) {
-  return ((0.37 - (driver.position - 4) * TRACK_GAP_PER_POSITION) % 1 + 1) % 1;
-}
+const carPhase = (driver) => ((0.37 - (driver.position - 4) * TRACK_GAP_PER_POSITION) % 1 + 1) % 1;
 
 function createCarMotion(driver, svgNamespace = 'http://www.w3.org/2000/svg') {
   const motion = document.createElementNS(svgNamespace, 'animateMotion');
